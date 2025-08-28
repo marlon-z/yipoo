@@ -26,12 +26,12 @@ export function BottomStatusBar() {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1">
           <Type className="w-3 h-3" />
-          <span>1,234 字</span>
+          {(() => { try { const { useEditorContext } = require('@/contexts/EditorContext'); const { countWords } = require('@/lib/markdown'); const { editorState } = useEditorContext(); return `${countWords(editorState.content)} 字`; } catch { return "-"; } })()}
         </div>
         
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
-          <span>已保存</span>
+          {(() => { try { const { useEditorContext } = require('@/contexts/EditorContext'); const { editorState } = useEditorContext(); return editorState.isDirty ? "未保存" : "已保存"; } catch { return "已保存"; } })()}
         </div>
         
         <div className="flex items-center gap-1">

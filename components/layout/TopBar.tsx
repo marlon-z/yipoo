@@ -100,7 +100,15 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           同步
         </Button>
         
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" onClick={async () => {
+          try {
+            const { useEditorContext } = require('@/contexts/EditorContext');
+            const { downloadAsFile } = require('@/hooks/use-file-system');
+            const { editorState, saveContent } = useEditorContext();
+            await saveContent();
+            await downloadAsFile('untitled-1.md', editorState.content, "text/markdown");
+          } catch (e) { console.error(e); }
+        }}>
           <Download className="w-4 h-4 mr-1" />
           导出
         </Button>
