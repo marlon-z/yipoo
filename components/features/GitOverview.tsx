@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { GitBranch, ArrowUp, ArrowDown, Plus, Minus, FileText } from 'lucide-react';
 
-const mockChangedFiles = [
+/* live changes */ const mockChangedFiles = [
   { name: 'README.md', status: 'modified', staged: false },
   { name: 'src/index.md', status: 'untracked', staged: false },
   { name: 'docs/guide.md', status: 'modified', staged: true },
@@ -56,7 +56,7 @@ export function GitOverview() {
           <CardTitle className="text-sm">更改的文件</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {mockChangedFiles.map((file, index) => (
+          {(() => { try { const git = require('@/lib/git-sim'); const changes = git.rwChanges(); return changes.map((file: any, index: number) => (
             <div key={index} className="flex items-center gap-2 text-sm group">
               <FileText className="w-4 h-4 text-blue-400" />
               <span className="flex-1">{file.name}</span>
@@ -70,11 +70,12 @@ export function GitOverview() {
                 variant="ghost" 
                 size="sm" 
                 className="h-5 w-5 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => { try { const git = require('@/lib/git-sim'); (file.staged ? git.rwUnstage : git.rwStage)(file.path); } catch {} }}
               >
                 {file.staged ? <Minus className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
               </Button>
             </div>
-          ))}
+          )) } catch { return null } })()}
         </CardContent>
       </Card>
 
@@ -93,7 +94,7 @@ export function GitOverview() {
             className="h-16 text-sm resize-none"
           />
           <div className="flex gap-2">
-            <Button size="sm" className="flex-1 h-7 text-xs">
+            <Button size="sm" className="flex-1 h-7 text-xs" onClick={() => { try { const git = require('@/lib/git-sim'); git.commit('chore: commit via UI'); } catch {} }}>
               提交
             </Button>
             <Button size="sm" variant="outline" className="flex-1 h-7 text-xs">

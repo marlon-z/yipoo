@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { GitCommit, Clock, User, FileText } from 'lucide-react';
 
-const mockCommits = [
+/* live commits */ const mockCommits = [
   {
     id: 'abc123',
     title: '添加新的文档结构',
@@ -43,7 +43,7 @@ export function GitHistory() {
           <CardTitle className="text-sm">提交历史</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {mockCommits.map((commit, index) => (
+          {(() => { try { const git = require('@/lib/git-sim'); const commits = git.getCommits(); return commits.map((commit: any, index: number) => (
             <div key={commit.id} className="space-y-3">
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0" />
@@ -72,7 +72,7 @@ export function GitHistory() {
                   </div>
                   
                   <div className="space-y-1">
-                    {commit.files.map((file, fileIndex) => (
+                    {commit.files.map((file: string, fileIndex: number) => (
                       <div key={fileIndex} className="flex items-center gap-2 text-xs">
                         <FileText className="w-3 h-3 text-blue-400" />
                         <span className="text-muted-foreground">{file}</span>
@@ -95,7 +95,7 @@ export function GitHistory() {
                 <div className="w-px h-6 bg-border ml-1" />
               )}
             </div>
-          ))}
+          )) } catch { return null } })()}
         </CardContent>
       </Card>
     </div>

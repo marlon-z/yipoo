@@ -29,7 +29,7 @@ interface FileNode {
   children?: FileNode[];
 }
 
-const mockFiles: FileNode[] = [
+/* mock removed */ const mockFiles: FileNode[] = [
   {
     id: '1',
     name: 'docs',
@@ -52,6 +52,10 @@ const mockFiles: FileNode[] = [
 ];
 
 export function FileExplorer() {
+  const git = require('@/lib/git-sim');
+  const { listTree, dwList, dwWrite, dwCreateFolder, dwRename, dwDelete, dwToRw } = git;
+  const [tick, setTick] = require('react').useState(0);
+  require('react').useEffect(() => { const onU = () => setTick((t: number) => t + 1); window.addEventListener('git-sim-updated', onU as any); return () => window.removeEventListener('git-sim-updated', onU as any); }, []);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['1', '4']));
   const [selectedFile, setSelectedFile] = useState<string>('7');
 
@@ -160,7 +164,7 @@ export function FileExplorer() {
 
       {/* File Tree */}
       <div className="flex-1 overflow-auto">
-        {mockFiles.map(node => renderFileNode(node))}
+        {listTree(dwList()).map((node: any) => renderFileNode(node))}
       </div>
     </div>
   );
