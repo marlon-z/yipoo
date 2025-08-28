@@ -33,9 +33,9 @@ export function ExportPanel() {
             导出为 Markdown
           </Button>
           
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start">
+          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" onClick={async () => { let id:any; try { const { useEditorContext } = require('@/contexts/EditorContext'); const { downloadAsFile } = require('@/hooks/use-file-system'); const { markdownToHtml } = require('@/lib/markdown'); const { editorState, saveContent } = useEditorContext(); id = startTask('导出 HTML', 5); await saveContent(); updateTask(id, { progress: 50 }); const html = `<!doctype html><html><head><meta charset="utf-8"><title>导出</title></head><body>${markdownToHtml(editorState.content)}</body></html>`; await downloadAsFile('untitled-1.html', html, 'text/html'); completeTask(id); } catch(e:any) { try { failTask?.(id, e?.message || '导出失败'); } catch {} console.error(e); } }} >
             <Image className="w-4 h-4 mr-2" />
-            导出为图片
+            导出为 HTML
           </Button>
         </CardContent>
       </Card>
