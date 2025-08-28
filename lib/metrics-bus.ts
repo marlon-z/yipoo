@@ -2,6 +2,8 @@
 
 export interface MetricsState {
   parseMs?: number;
+  renderMs?: number;
+  endToEndMs?: number;
 }
 
 type Listener = (s: MetricsState) => void;

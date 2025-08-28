@@ -15,13 +15,14 @@ export function useParserWorker(markdown: string, options?: { math?: boolean; hi
   const [result, setResult] = useState<ParseResult>({ headings: [], parseMs: 0 });
 
   useEffect(() => {
+    const t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
     if (!workerRef.current) {
       workerRef.current = new Worker(new URL('../workers/parser.worker.ts', import.meta.url) as any, { type: 'module' } as any);
       workerRef.current.addEventListener('message', (e: MessageEvent) => {
         const { type, payload } = e.data || {};
         if (type === 'result') {
           setResult(payload);
-          updateMetrics({ parseMs: payload.parseMs });
+          updateMetrics({ parseMs: payload.parseMs, renderMs: payload.renderMs, endToEndMs: (typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0 });
         }
       });
     }
