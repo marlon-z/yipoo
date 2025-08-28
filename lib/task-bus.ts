@@ -17,20 +17,22 @@ export interface Task {
 
 type Listener = (tasks: Task[]) => void;
 
-const listeners = new Set<Listener>();
+const listeners: Listener[] = [];
 let tasks: Task[] = [];
 let idCounter = 0;
 
 function emit() {
-  for (const l of listeners) l(tasks);
+  listeners.forEach((l) => l(tasks));
 }
 
 export function subscribe(listener: Listener): () => void {
-  listeners.add(listener);
+  listeners.push(listener);
   // emit current once
   listener(tasks);
   return () => {
-    listeners.delete(listener);
+    
+    const i = listeners.indexOf(listener);
+    if (i >= 0) listeners.splice(i, 1);
   };
 }
 
