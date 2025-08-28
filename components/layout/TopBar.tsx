@@ -13,6 +13,7 @@ import {
   PanelRight,
   Users
 } from 'lucide-react';
+import { startTask, updateTask, completeTask, failTask } from '@/lib/task-bus';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,18 +101,91 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           同步
         </Button>
         
-        <Button variant="ghost" size="sm" onClick={async () => {
-          try {
-            const { useEditorContext } = require('@/contexts/EditorContext');
-            const { downloadAsFile } = require('@/hooks/use-file-system');
-            const { editorState, saveContent } = useEditorContext();
-            await saveContent();
-            await downloadAsFile('untitled-1.md', editorState.content, "text/markdown");
-          } catch (e) { console.error(e); }
-        }}>
-          <Download className="w-4 h-4 mr-1" />
-          导出
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <Download className="w-4 h-4 mr-1" />
+              导出
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={async () => {
+              let id: any;
+              try {
+                const { useEditorContext } = require('@/contexts/EditorContext');
+                const { downloadAsFile } = require('@/hooks/use-file-system');
+                const { editorState, saveContent } = useEditorContext();
+                id = startTask('导出 Markdown', 5);
+                await saveContent();
+                updateTask(id, { progress: 60 });
+                await downloadAsFile('untitled-1.md', editorState.content, 'text/markdown');
+                completeTask(id);
+              } catch (e: any) {
+                try { failTask?.(id, e?.message || '导出失败'); } catch {}
+                console.error(e);
+              }
+            }}>Markdown (.md)</DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              let id: any;
+              try {
+                const { useEditorContext } = require('@/contexts/EditorContext');
+                const { useExportSettings } = require('@/contexts/ExportContext');
+                const { renderHtml } = require('@/lib/exporters');
+                const { downloadAsFile } = require('@/hooks/use-file-system');
+                const { editorState, saveContent } = useEditorContext();
+                id = startTask('导出 HTML', 5);
+                await saveContent();
+                const opts = useExportSettings().settings;
+                updateTask(id, { progress: 40 });
+                const html = await renderHtml(editorState.content, { title: '导出', math: opts.math, highlight: opts.highlight });
+                updateTask(id, { progress: 80 });
+                await downloadAsFile('untitled-1.html', html, 'text/html');
+                completeTask(id);
+              } catch (e: any) {
+                try { failTask?.(id, e?.message || '导出失败'); } catch {}
+                console.error(e);
+              }
+            }}>HTML (.html)</DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              let id: any;
+              try {
+                const { useEditorContext } = require('@/contexts/EditorContext');
+                const { renderPdf } = require('@/lib/exporters');
+                const { downloadAsFile } = require('@/hooks/use-file-system');
+                const { editorState, saveContent } = useEditorContext();
+                id = startTask('导出 PDF', 5);
+                await saveContent();
+                updateTask(id, { progress: 40 });
+                const bytes = await renderPdf(editorState.content);
+                updateTask(id, { progress: 80 });
+                await downloadAsFile('untitled-1.pdf', new Uint8Array(bytes), 'application/pdf');
+                completeTask(id);
+              } catch (e: any) {
+                try { failTask?.(id, e?.message || '导出失败'); } catch {}
+                console.error(e);
+              }
+            }}>PDF (.pdf)</DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              let id: any;
+              try {
+                const { useEditorContext } = require('@/contexts/EditorContext');
+                const { renderDocx } = require('@/lib/exporters');
+                const { downloadAsFile } = require('@/hooks/use-file-system');
+                const { editorState, saveContent } = useEditorContext();
+                id = startTask('导出 DOCX', 5);
+                await saveContent();
+                updateTask(id, { progress: 40 });
+                const blob = await renderDocx(editorState.content);
+                updateTask(id, { progress: 80 });
+                await downloadAsFile('untitled-1.docx', blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+                completeTask(id);
+              } catch (e: any) {
+                try { failTask?.(id, e?.message || '导出失败'); } catch {}
+                console.error(e);
+              }
+            }}>DOCX (.docx)</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Button variant="ghost" size="sm">
           <Users className="w-4 h-4 mr-1" />
