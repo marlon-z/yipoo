@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { GitBranch, Zap, MapPin, Type, Clock, ListTodo, AlertCircle } from 'lucide-react';
+import { GitBranch, Zap, MapPin, Type, Clock, ListTodo, AlertCircle, Activity } from 'lucide-react';
 
 export function BottomStatusBar() {
   const [taskSummary, setTaskSummary] = useState<{ running: number; errors: number }>({ running: 0, errors: 0 });
