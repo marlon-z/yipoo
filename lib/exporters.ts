@@ -6,19 +6,35 @@ import remarkParse from 'remark-parse';
 import remarkGfm from 'remark-gfm';
 import remarkRehype from 'remark-rehype';
 import rehypeStringify from 'rehype-stringify';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
+import rehypeHighlight from 'rehype-highlight';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx';
 
-export async function renderHtml(markdown: string, options?: { title?: string }): Promise<string> {
-  const file = await unified()
+export async function renderHtml(
+  markdown: string,
+  options?: { title?: string; math?: boolean; highlight?: boolean }
+): Promise<string> {
+  let p = unified()
     .use(remarkParse)
     .use(remarkGfm)
-    .use(remarkRehype)
-    .use(rehypeStringify)
-    .process(markdown);
+    .use(remarkRehype, { allowDangerousHtml: true });
+  if (options?.math) {
+    p = p.use(remarkMath).use(rehypeKatex);
+  }
+  p = p.use(rehypeSlug).use(rehypeAutolinkHeadings);
+  if (options?.highlight) {
+    p = p.use(rehypeHighlight);
+  }
+  const file = await p.use(rehypeStringify, { allowDangerousHtml: true }).process(markdown);
   const body = String(file);
   const title = options?.title ?? '导出';
-  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${title}</title></head><body>${body}</body></html>`;
+  const katexCss = options?.math ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>' : '';
+  const highlightCss = options?.highlight ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"/>' : '';
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"/>${katexCss}${highlightCss}<title>${title}</title></head><body>${body}</body></html>`;
   return html;
 }
 
