@@ -38,7 +38,10 @@ export function BottomStatusBar() {
           <Zap className="w-3 h-3" />
           <span>60 FPS</span>
         </div>
-      </div>
+      
+      {/* Tasks & Errors (placeholder) */}
+      <div className="hidden" id="task-log" />
+    </div>
     </div>
   );
 }

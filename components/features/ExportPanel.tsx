@@ -27,7 +27,7 @@ export function ExportPanel() {
             导出为 DOCX
           </Button>
           
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start">
+          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" onClick={async () => { try { const { useEditorContext } = require('@/contexts/EditorContext'); const { downloadAsFile } = require('@/hooks/use-file-system'); const { editorState, saveContent } = useEditorContext(); await saveContent(); await downloadAsFile('untitled-1.md', editorState.content, "text/markdown"); } catch(e) { console.error(e); } }}>
             <FileText className="w-4 h-4 mr-2" />
             导出为 Markdown
           </Button>
