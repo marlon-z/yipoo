@@ -18,7 +18,7 @@ export function ExportPanel() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" onClick={async () => { let id:any; try { const { useEditorContext } = require('@/contexts/EditorContext'); const { downloadAsFile } = require('@/hooks/use-file-system'); const { renderHtml } = require('@/lib/exporters'); const { editorState, saveContent } = useEditorContext(); id = startTask('导出 PDF', 5); await saveContent(); updateTask(id, { progress: 30 }); const html = await renderHtml(editorState.content); const { renderPdf } = require('@/lib/exporters'); const bytes = await renderPdf(editorState.content); await downloadAsFile('untitled-1.pdf', new Uint8Array(bytes), 'application/pdf'); completeTask(id); } catch(e:any) { try { failTask?.(id, e?.message || '导出失败'); } catch {} console.error(e); } }} >
+          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" onClick={async () => { let id:any; try { const { useEditorContext } = require('@/contexts/EditorContext'); const { downloadAsFile } = require('@/hooks/use-file-system'); const { renderHtml } = require('@/lib/exporters'); const { editorState, saveContent } = useEditorContext(); id = startTask('导出 PDF', 5); await saveContent(); updateTask(id, { progress: 30 }); const { useExportSettings } = require('@/contexts/ExportContext'); const opts = useExportSettings().settings; const html = await renderHtml(editorState.content, { title: '导出', math: opts.math, highlight: opts.highlight }); const { renderPdf } = require('@/lib/exporters'); const bytes = await renderPdf(editorState.content); await downloadAsFile('untitled-1.pdf', new Uint8Array(bytes), 'application/pdf'); completeTask(id); } catch(e:any) { try { failTask?.(id, e?.message || '导出失败'); } catch {} console.error(e); } }} >
             <FileText className="w-4 h-4 mr-2" />
             导出为 PDF
           </Button>
@@ -33,7 +33,7 @@ export function ExportPanel() {
             导出为 Markdown
           </Button>
           
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" onClick={async () => { let id:any; try { const { useEditorContext } = require('@/contexts/EditorContext'); const { downloadAsFile } = require('@/hooks/use-file-system'); const { renderHtml } = require('@/lib/exporters'); const { editorState, saveContent } = useEditorContext(); id = startTask('导出 HTML', 5); await saveContent(); updateTask(id, { progress: 50 }); const html = await renderHtml(editorState.content); await downloadAsFile('untitled-1.html', html, 'text/html'); completeTask(id); } catch(e:any) { try { failTask?.(id, e?.message || '导出失败'); } catch {} console.error(e); } }} >
+          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" onClick={async () => { let id:any; try { const { useEditorContext } = require('@/contexts/EditorContext'); const { downloadAsFile } = require('@/hooks/use-file-system'); const { renderHtml } = require('@/lib/exporters'); const { editorState, saveContent } = useEditorContext(); id = startTask('导出 HTML', 5); await saveContent(); updateTask(id, { progress: 50 }); const { useExportSettings } = require('@/contexts/ExportContext'); const opts = useExportSettings().settings; const html = await renderHtml(editorState.content, { title: '导出', math: opts.math, highlight: opts.highlight }); await downloadAsFile('untitled-1.html', html, 'text/html'); completeTask(id); } catch(e:any) { try { failTask?.(id, e?.message || '导出失败'); } catch {} console.error(e); } }} >
             <Image className="w-4 h-4 mr-2" />
             导出为 HTML
           </Button>
@@ -47,27 +47,27 @@ export function ExportPanel() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-xs">包含目录</Label>
-            <Switch defaultChecked />
+            <Switch checked={(() => { try { const { useExportSettings } = require('@/contexts/ExportContext'); return useExportSettings().settings.includeToc; } catch { return true; } })()} onCheckedChange={(v) => { try { const { useExportSettings } = require('@/contexts/ExportContext'); useExportSettings().update({ includeToc: !!v }); } catch {} }} />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">页面编号</Label>
-            <Switch />
+            <Switch checked={( () => { try { const { useExportSettings } = require('@/contexts/ExportContext'); return useExportSettings().settings.pageNumbers; } catch { return false; } })()} onCheckedChange={(v) => { try { const { useExportSettings } = require('@/contexts/ExportContext'); useExportSettings().update({ pageNumbers: !!v }); } catch {} }} />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">语法高亮</Label>
-            <Switch defaultChecked />
+            <Switch checked={(() => { try { const { useExportSettings } = require('@/contexts/ExportContext'); return useExportSettings().settings.includeToc; } catch { return true; } })()} onCheckedChange={(v) => { try { const { useExportSettings } = require('@/contexts/ExportContext'); useExportSettings().update({ includeToc: !!v }); } catch {} }} />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">数学公式</Label>
-            <Switch defaultChecked />
+            <Switch checked={(() => { try { const { useExportSettings } = require('@/contexts/ExportContext'); return useExportSettings().settings.includeToc; } catch { return true; } })()} onCheckedChange={(v) => { try { const { useExportSettings } = require('@/contexts/ExportContext'); useExportSettings().update({ includeToc: !!v }); } catch {} }} />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">图表渲染</Label>
-            <Switch defaultChecked />
+            <Switch checked={(() => { try { const { useExportSettings } = require('@/contexts/ExportContext'); return useExportSettings().settings.includeToc; } catch { return true; } })()} onCheckedChange={(v) => { try { const { useExportSettings } = require('@/contexts/ExportContext'); useExportSettings().update({ includeToc: !!v }); } catch {} }} />
           </div>
         </CardContent>
       </Card>

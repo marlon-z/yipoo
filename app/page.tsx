@@ -8,6 +8,7 @@ import { RightSidebar } from '@/components/layout/RightSidebar';
 import { BottomStatusBar } from '@/components/layout/BottomStatusBar';
 import { cn } from '@/lib/utils';
 import { EditorProvider } from '@/contexts/EditorContext';
+import { ExportProvider } from '@/contexts/ExportContext';
 
 export default function Home() {
   const [sidebarMode, setSidebarMode] = useState<'files' | 'git'>('files');
@@ -18,6 +19,7 @@ export default function Home() {
   return (
     <div className={cn("h-screen flex flex-col overflow-hidden", isDarkMode ? "dark" : "")}>
       <EditorProvider initialContent={"# Welcome to MarkdownIDE\n\n这是一个现代化的 Markdown 编辑器，具有类似 VSCode 的专业界面设计。"} fileName="untitled-1.md">
+      <ExportProvider>
       <div className="bg-background text-foreground flex-1 flex flex-col">
         {/* Top Bar */}
         <TopBar 
@@ -51,6 +53,7 @@ export default function Home() {
         {/* Bottom Status Bar */}
         <BottomStatusBar />
       </div>
+      </ExportProvider>
       </EditorProvider>
     </div>
   );
