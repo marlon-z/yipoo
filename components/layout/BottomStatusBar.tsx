@@ -6,6 +6,7 @@ import { GitBranch, Zap, MapPin, Type, Clock, ListTodo, AlertCircle, Activity } 
 
 export function BottomStatusBar() {
   const [taskSummary, setTaskSummary] = useState<{ running: number; errors: number }>({ running: 0, errors: 0 });
+  const [avgProgress, setAvgProgress] = useState<number | null>(null);
 
   useEffect(() => {
     try {
@@ -14,6 +15,13 @@ export function BottomStatusBar() {
         const running = tasks.filter((t) => t.status === 'running').length;
         const errors = tasks.filter((t) => t.status === 'error').length;
         setTaskSummary({ running, errors });
+        const runningTasks = tasks.filter((t) => t.status === 'running');
+        if (runningTasks.length > 0) {
+          const sum = runningTasks.reduce((acc, t) => acc + (t.progress || 0), 0);
+          setAvgProgress(Math.round(sum / runningTasks.length));
+        } else {
+          setAvgProgress(null);
+        }
       });
       return () => unsubscribe();
     } catch {
@@ -69,7 +77,7 @@ export function BottomStatusBar() {
             {taskSummary.running > 0 && (
               <div className="flex items-center gap-1">
                 <ListTodo className="w-3 h-3" />
-                <span>{taskSummary.running} 进行中</span>
+                <span>{taskSummary.running} 进行中{avgProgress != null ? ` · ${avgProgress}%` : ''}</span>
               </div>
             )}
             {taskSummary.errors > 0 && (
