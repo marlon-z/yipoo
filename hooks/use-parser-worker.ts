@@ -6,9 +6,11 @@ import { updateMetrics } from '@/lib/metrics-bus';
 interface ParseResult {
   headings: { level: number; title: string }[];
   parseMs: number;
+  renderMs?: number;
+  html?: string;
 }
 
-export function useParserWorker(markdown: string) {
+export function useParserWorker(markdown: string, options?: { math?: boolean; highlight?: boolean; mode?: 'parse' | 'render' }) {
   const workerRef = useRef<Worker | null>(null);
   const [result, setResult] = useState<ParseResult>({ headings: [], parseMs: 0 });
 
@@ -24,7 +26,8 @@ export function useParserWorker(markdown: string) {
       });
     }
     const w = workerRef.current;
-    w?.postMessage({ type: 'parse', payload: { markdown } });
+    const mode = options?.mode || 'parse';
+    w?.postMessage({ type: mode, payload: { markdown, options } });
     return () => {
       // keep worker alive for reuse
     };

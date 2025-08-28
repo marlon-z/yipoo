@@ -19,7 +19,7 @@ export function TableOfContents() {
     const { useEditorContext } = require('@/contexts/EditorContext');
     const { useParserWorker } = require('@/hooks/use-parser-worker');
     const { editorState } = useEditorContext();
-    const parsed = useParserWorker(editorState.content || "");
+    const parsed = useParserWorker(editorState.content || "", { mode: 'parse' });
     const heads = parsed.headings;
     return (
       <div className="w-64 bg-card border-l border-border shrink-0">
