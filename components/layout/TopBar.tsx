@@ -29,6 +29,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRightSidebarOpen }: TopBarProps) {
+  const { editorState, saveContent } = require('@/contexts/EditorContext');
   return (
     <div className="h-12 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
       {/* Left Section */}
