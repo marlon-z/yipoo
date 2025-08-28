@@ -17,9 +17,10 @@ import { cn } from '@/lib/utils';
 export function TableOfContents() {
   try {
     const { useEditorContext } = require('@/contexts/EditorContext');
-    const { extractHeadings } = require('@/lib/markdown');
+    const { useParserWorker } = require('@/hooks/use-parser-worker');
     const { editorState } = useEditorContext();
-    const heads = extractHeadings(editorState.content || "");
+    const parsed = useParserWorker(editorState.content || "");
+    const heads = parsed.headings;
     return (
       <div className="w-64 bg-card border-l border-border shrink-0">
         <div className="h-10 border-b border-border flex items-center px-3">

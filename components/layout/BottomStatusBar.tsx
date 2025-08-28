@@ -56,6 +56,11 @@ export function BottomStatusBar() {
           <span>60 FPS</span>
         </div>
 
+        {/* Parse metrics */}
+        <div className="flex items-center gap-1">
+          {(() => { try { const { subscribe, getMetrics } = require('@/lib/metrics-bus'); const [ms, setMs] = (require('react') as any).useState(getMetrics().parseMs || 0); (require('react') as any).useEffect(() => { const unsub = subscribe((m:any) => setMs(m.parseMs || 0)); return () => unsub(); }, []); return <span>解析 {ms}ms</span>; } catch { return null; } })()}
+        </div>
+
         {/* Tasks & Errors */}
         {(taskSummary.running > 0 || taskSummary.errors > 0) && (
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => {
