@@ -1,9 +1,26 @@
 "use client";
 
+import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { GitBranch, Zap, MapPin, Type, Clock } from 'lucide-react';
+import { GitBranch, Zap, MapPin, Type, Clock, ListTodo, AlertCircle } from 'lucide-react';
 
 export function BottomStatusBar() {
+  const [taskSummary, setTaskSummary] = useState<{ running: number; errors: number }>({ running: 0, errors: 0 });
+
+  useEffect(() => {
+    try {
+      const { subscribe } = require('@/lib/task-bus') as typeof import('@/lib/task-bus');
+      const unsubscribe = subscribe((tasks) => {
+        const running = tasks.filter((t) => t.status === 'running').length;
+        const errors = tasks.filter((t) => t.status === 'error').length;
+        setTaskSummary({ running, errors });
+      });
+      return () => unsubscribe();
+    } catch {
+      return () => void 0;
+    }
+  }, []);
+
   return (
     <div className="h-6 bg-card border-t border-border flex items-center justify-between px-4 text-xs text-muted-foreground shrink-0">
       {/* Left Section */}
@@ -38,10 +55,25 @@ export function BottomStatusBar() {
           <Zap className="w-3 h-3" />
           <span>60 FPS</span>
         </div>
-      
-      {/* Tasks & Errors (placeholder) */}
-      <div className="hidden" id="task-log" />
-    </div>
+
+        {/* Tasks & Errors */}
+        {(taskSummary.running > 0 || taskSummary.errors > 0) && (
+          <div className="flex items-center gap-3">
+            {taskSummary.running > 0 && (
+              <div className="flex items-center gap-1">
+                <ListTodo className="w-3 h-3" />
+                <span>{taskSummary.running} 进行中</span>
+              </div>
+            )}
+            {taskSummary.errors > 0 && (
+              <div className="flex items-center gap-1 text-destructive">
+                <AlertCircle className="w-3 h-3" />
+                <span>{taskSummary.errors} 错误</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
