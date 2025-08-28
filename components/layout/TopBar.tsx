@@ -137,7 +137,7 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
                 await saveContent();
                 const opts = useExportSettings().settings;
                 updateTask(id, { progress: 40 });
-                const html = await renderHtml(editorState.content, { title: '导出', math: opts.math, highlight: opts.highlight });
+                const html = await renderHtml(editorState.content, { title: '导出', math: opts.math, highlight: opts.highlight, includeToc: opts.includeToc });
                 updateTask(id, { progress: 80 });
                 await downloadAsFile('untitled-1.html', html, 'text/html');
                 completeTask(id);

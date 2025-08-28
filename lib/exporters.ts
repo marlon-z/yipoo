@@ -16,7 +16,7 @@ import { Document, Packer, Paragraph, HeadingLevel, TextRun } from 'docx';
 
 export async function renderHtml(
   markdown: string,
-  options?: { title?: string; math?: boolean; highlight?: boolean }
+  options?: { title?: string; math?: boolean; highlight?: boolean; includeToc?: boolean }
 ): Promise<string> {
   let p = unified()
     .use(remarkParse)
@@ -30,7 +30,14 @@ export async function renderHtml(
     p = p.use(rehypeHighlight);
   }
   const file = await p.use(rehypeStringify, { allowDangerousHtml: true }).process(markdown);
-  const body = String(file);
+  let body = String(file);
+  if (options?.includeToc) {
+    const headings = Array.from(body.matchAll(/<h([1-6])[^>]*id=\"([^\"]+)\"[^>]*>(.*?)<\/h\1>/g)).map(m => ({ level: Number(m[1]), id: m[2], title: m[3].replace(/<[^>]+>/g,'') }));
+    if (headings.length) {
+      const toc = '<nav><h2>目录</h2><ul>' + headings.map(h => `<li style=\"margin-left:${(h.level-1)*12}px\"><a href=\"#${h.id}\">${h.title}</a></li>`).join() + '</ul></nav>';
+      body = toc + body;
+    }
+  }
   const title = options?.title ?? '导出';
   const katexCss = options?.math ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"/>' : '';
   const highlightCss = options?.highlight ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"/>' : '';
@@ -38,7 +45,7 @@ export async function renderHtml(
   return html;
 }
 
-export async function renderPdf(markdown: string): Promise<Uint8Array> {
+export async function renderPdf(markdown: string, options?: { pageNumbers?: boolean }): Promise<Uint8Array> {
   // Minimal, text-only PDF: convert markdown to plain text and write line by line
   const text = markdown
     .replace(/^#{1,6}\s+/gm, '')
@@ -88,6 +95,16 @@ export async function renderPdf(markdown: string): Promise<Uint8Array> {
     y -= fontSize * 0.75;
   }
 
+  if (options?.pageNumbers) {
+    const pages = pdfDoc.getPages();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const size = 10;
+    pages.forEach((pg, idx) => {
+      const label = `${idx + 1} / ${pages.length}`;
+      const w = font.widthOfTextAtSize(label, size);
+      pg.drawText(label, { x: (pg.getWidth() - w) / 2, y: 20, size, font, color: rgb(0,0,0) });
+    });
+  }
   const bytes = await pdfDoc.save();
   return bytes;
 }
