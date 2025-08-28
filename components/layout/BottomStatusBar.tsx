@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { GitBranch, Zap, MapPin, Type, Clock, ListTodo, AlertCircle, Activity } from 'lucide-react';
+import { GitBranch, Zap, MapPin, Type, Clock, ListTodo, AlertCircle, Activity, Users } from 'lucide-react';
 
 export function BottomStatusBar() {
   const [taskSummary, setTaskSummary] = useState<{ running: number; errors: number }>({ running: 0, errors: 0 });
@@ -49,6 +49,14 @@ export function BottomStatusBar() {
 
       {/* Right Section */}
       <div className="flex items-center gap-4">
+        {/* Collab indicator */}
+        {(() => { try { const { useCollab } = require('@/contexts/CollabContext'); const { state } = useCollab(); return (
+          <div className={`flex items-center gap-1 ${state.enabled ? '' : 'opacity-60'}`}>
+            <Users className="w-3 h-3" />
+            <span>{state.enabled ? (state.connection === 'online' ? '协作·在线' : '协作·离线') : '协作·关闭'}</span>
+          </div>
+        ); } catch { return null; } })()}
+
         <div className="flex items-center gap-1">
           <Type className="w-3 h-3" />
           {(() => { try { const { useEditorContext } = require('@/contexts/EditorContext'); const { countWords } = require('@/lib/markdown'); const { editorState } = useEditorContext(); return `${countWords(editorState.content)} 字`; } catch { return "-"; } })()}

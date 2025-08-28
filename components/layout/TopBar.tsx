@@ -31,6 +31,7 @@ interface TopBarProps {
 
 export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRightSidebarOpen }: TopBarProps) {
   const { editorState, saveContent } = require('@/contexts/EditorContext');
+  const collab = (() => { try { return require('@/contexts/CollabContext').useCollab(); } catch { return null; } })();
   return (
     <div className="h-12 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
       {/* Left Section */}
@@ -187,9 +188,9 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="ghost" size="sm">
+        <Button variant="ghost" size="sm" onClick={() => { try { collab?.toggleEnabled(); } catch {} }}>
           <Users className="w-4 h-4 mr-1" />
-          协作
+          协作{collab?.state?.enabled ? "（开）" : "（关）"}
         </Button>
 
         <Button 

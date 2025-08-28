@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
+import { useCollab } from '@/contexts/CollabContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -15,6 +16,10 @@ const mockCollaborators = [
 ];
 
 export function CollabPanel() {
+  const { state, toggleEnabled, setReadOnly, setShowCursors, setOfflineSync } = (() => { try { return useCollab(); } catch { return {
+    state: { enabled: false, readOnly: false, showCursors: true, offlineSync: false, connection: 'online', members: [] },
+    toggleEnabled: () => {}, setReadOnly: () => {}, setShowCursors: () => {}, setOfflineSync: () => {}
+  } as any; } })();
   return (
     <div className="space-y-4">
       <Card>
@@ -27,17 +32,21 @@ export function CollabPanel() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-xs">实时协作</Label>
-            <Switch defaultChecked />
+            <Switch checked={state.enabled} onCheckedChange={toggleEnabled} />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">光标同步</Label>
-            <Switch defaultChecked />
+            <Switch checked={state.showCursors} onCheckedChange={setShowCursors} />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">离线同步</Label>
-            <Switch />
+            <Switch checked={state.offlineSync} onCheckedChange={setOfflineSync} />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">只读模式</Label>
+            <Switch checked={state.readOnly} onCheckedChange={setReadOnly} />
           </div>
         </CardContent>
       </Card>
@@ -47,7 +56,7 @@ export function CollabPanel() {
           <CardTitle className="text-sm">在线协作者</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {mockCollaborators.map((user, index) => (
+          {(state.members?.length ? state.members : mockCollaborators).map((user, index) => (
             <div key={index} className="flex items-center gap-3">
               <Avatar className="w-7 h-7">
                 <AvatarFallback className="text-xs">{user.initials}</AvatarFallback>
@@ -71,6 +80,10 @@ export function CollabPanel() {
               </div>
             </div>
           ))}
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">只读模式</Label>
+            <Switch checked={state.readOnly} onCheckedChange={setReadOnly} />
+          </div>
         </CardContent>
       </Card>
 
@@ -93,6 +106,10 @@ export function CollabPanel() {
             <Link className="w-3 h-3 mr-2" />
             复制链接
           </Button>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">只读模式</Label>
+            <Switch checked={state.readOnly} onCheckedChange={setReadOnly} />
+          </div>
         </CardContent>
       </Card>
     </div>

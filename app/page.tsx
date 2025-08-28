@@ -9,6 +9,7 @@ import { BottomStatusBar } from '@/components/layout/BottomStatusBar';
 import { cn } from '@/lib/utils';
 import { EditorProvider } from '@/contexts/EditorContext';
 import { ExportProvider } from '@/contexts/ExportContext';
+import { CollabProvider } from '@/contexts/CollabContext';
 
 export default function Home() {
   const [sidebarMode, setSidebarMode] = useState<'files' | 'git'>('files');
@@ -55,6 +56,7 @@ export default function Home() {
         {/* Task Drawer */}
         {(() => { try { const { TaskDrawer } = require('@/components/layout/TaskDrawer'); return <TaskDrawer /> } catch { return null } })()}
       </div>
+      </CollabProvider>
       </ExportProvider>
       </EditorProvider>
     </div>
