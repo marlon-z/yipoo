@@ -52,6 +52,8 @@ export default function Home() {
         
         {/* Bottom Status Bar */}
         <BottomStatusBar />
+        {/* Task Drawer */}
+        {(() => { try { const { TaskDrawer } = require('@/components/layout/TaskDrawer'); return <TaskDrawer /> } catch { return null } })()}
       </div>
       </ExportProvider>
       </EditorProvider>

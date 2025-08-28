@@ -58,7 +58,9 @@ export function BottomStatusBar() {
 
         {/* Tasks & Errors */}
         {(taskSummary.running > 0 || taskSummary.errors > 0) && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => {
+            try { const ev = new CustomEvent('open-task-drawer'); window.dispatchEvent(ev); } catch {}
+          }}>
             {taskSummary.running > 0 && (
               <div className="flex items-center gap-1">
                 <ListTodo className="w-3 h-3" />
