@@ -1,9 +1,6 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WysiwygEditor } from '@/components/features/WysiwygEditor';
-import { SourceEditor } from '@/components/features/SourceEditor';
-import { SplitEditor } from '@/components/features/SplitEditor';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TableOfContents } from '@/components/features/TableOfContents';
 import { Eye, Code, Split } from 'lucide-react';
 
@@ -38,9 +35,26 @@ export function MainEditor({ mode, setMode }: MainEditorProps) {
       {/* Editor Content */}
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 relative overflow-hidden">
-          {mode === 'wysiwyg' && <WysiwygEditor />}
-          {mode === 'source' && <SourceEditor />}
-          {mode === 'split' && <SplitEditor />}
+          {mode === 'wysiwyg' && (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+              所见即所得模式（编辑器已移除）
+            </div>
+          )}
+          {mode === 'source' && (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+              源码模式（编辑器已移除）
+            </div>
+          )}
+          {mode === 'split' && (
+            <div className="w-full h-full grid grid-cols-2 divide-x divide-border">
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                左侧：源码（编辑器已移除）
+              </div>
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                右侧：所见即所得（编辑器已移除）
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Table of Contents */}
