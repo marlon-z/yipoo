@@ -1,4 +1,7 @@
 import './globals.css';
+import 'prosemirror-view/style/prosemirror.css';
+import '@milkdown/crepe/theme/common/style.css';
+import '@milkdown/crepe/theme/frame.css';
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 

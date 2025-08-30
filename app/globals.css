@@ -74,9 +74,6 @@
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -100,12 +97,50 @@
   @apply bg-muted-foreground/50;
 }
 
-/* Smooth animations */
-* {
+/* Smooth animations (avoid affecting editor internals) */
+:root body {
   transition: all 0.15s ease-in-out;
 }
 
 /* Professional IDE-like styling */
 .font-mono {
   font-family: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+/* Milkdown base height & padding */
+.milkdown {
+  height: 100%;
+}
+.milkdown .ProseMirror {
+  min-height: 100%;
+  outline: none;
+  padding: 12px;
+  caret-color: currentColor;
+  cursor: text;
+}
+
+/* Milkdown scoped transitions to restore hover effects without global side effects */
+.milkdown * {
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+}
+
+/* Fix conflicts for code blocks caused by global resets (Tailwind base) */
+.milkdown pre {
+  background-color: var(--crepe-color-surface, #f6f8fa);
+  border-radius: 8px;
+  padding: 12px 14px;
+  line-height: 1.6;
+  overflow: auto;
+}
+.milkdown pre code {
+  background: transparent;
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: 0.9em;
+}
+/* Inline code chips */
+.milkdown :not(pre) > code {
+  background-color: var(--crepe-color-inline-area, rgba(27,31,35,.05));
+  color: var(--crepe-color-inline-code, inherit);
+  border-radius: 4px;
+  padding: 2px 4px;
 }

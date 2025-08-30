@@ -10,13 +10,12 @@ import { cn } from '@/lib/utils';
 
 export default function Home() {
   const [sidebarMode, setSidebarMode] = useState<'files' | 'git'>('files');
-  const [editorMode, setEditorMode] = useState<'wysiwyg' | 'source' | 'split'>('wysiwyg');
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   return (
-    <div className={cn("h-screen flex flex-col overflow-hidden", isDarkMode ? "dark" : "")}>
-      <div className="bg-background text-foreground flex-1 flex flex-col">
+    <div className={cn("h-screen flex flex-col overflow-hidden", isDarkMode ? "dark" : "")}> 
+      <div className="bg-background text-foreground flex-1 flex flex-col min-h-0">
         {/* Top Bar */}
         <TopBar 
           isDarkMode={isDarkMode}
@@ -25,7 +24,7 @@ export default function Home() {
           setIsRightSidebarOpen={setIsRightSidebarOpen}
         />
         
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex min-h-0 overflow-hidden">
           {/* Left Sidebar */}
           <LeftSidebar 
             mode={sidebarMode}
@@ -33,11 +32,8 @@ export default function Home() {
           />
           
           {/* Main Content */}
-          <div className="flex-1 flex overflow-hidden">
-            <MainEditor 
-              mode={editorMode}
-              setMode={setEditorMode}
-            />
+          <div className="flex-1 flex min-h-0 overflow-hidden">
+            <MainEditor />
             
             {/* Right Sidebar */}
             {isRightSidebarOpen && (
