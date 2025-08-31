@@ -11,7 +11,8 @@ import {
   Moon, 
   Sun,
   PanelRight,
-  Users
+  Users,
+  Save
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -20,6 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from '@/hooks/use-toast';
 
 interface TopBarProps {
   isDarkMode: boolean;
@@ -48,7 +50,10 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
             <DropdownMenuContent>
               <DropdownMenuItem>新建文件</DropdownMenuItem>
               <DropdownMenuItem>打开文件</DropdownMenuItem>
-              <DropdownMenuItem>保存</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => {
+                window.dispatchEvent(new CustomEvent('dw-force-save'));
+                toast({ title: '已保存到本地' });
+              }}>保存</DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>导入</DropdownMenuItem>
             </DropdownMenuContent>
@@ -123,6 +128,10 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
         >
           <PanelRight className="w-4 h-4" />
+        </Button>
+
+        <Button variant="ghost" size="sm" onClick={() => { window.dispatchEvent(new CustomEvent('dw-force-save')); toast({ title: '已保存到本地' }); }}>
+          <Save className="w-4 h-4 mr-1" /> 保存
         </Button>
 
         <Button variant="ghost" size="sm">

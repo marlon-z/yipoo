@@ -124,6 +124,36 @@ export function FileExplorer() {
     setExpandedFolders(next);
   };
 
+  const renameNode = async (node: FileNode) => {
+    const name = window.prompt('重命名', node.name);
+    if (!name || name === node.name) return;
+    const update = (nodes: FileNode[]): FileNode[] => nodes.map(n => {
+      if (n.id === node.id) return { ...n, name };
+      if (n.type === 'folder' && n.children) return { ...n, children: update(n.children as FileNode[]) };
+      return n;
+    });
+    const updated = update(tree);
+    setTree(updated);
+    await dwSaveTree(updated);
+  };
+
+  const deleteNode = async (node: FileNode) => {
+    const confirmDel = window.confirm(`确定删除 ${node.name} 吗？`);
+    if (!confirmDel) return;
+    const remove = (nodes: FileNode[]): FileNode[] => nodes.filter(n => n.id !== node.id).map(n => {
+      if (n.type === 'folder' && n.children) return { ...n, children: remove(n.children as FileNode[]) };
+      return n;
+    });
+    const updated = remove(tree);
+    setTree(updated);
+    await dwSaveTree(updated);
+  };
+
+  const copyPath = async (node: FileNode) => {
+    // 简单用名称作为路径占位；后续可计算完整层级路径
+    await navigator.clipboard.writeText(node.name);
+  };
+
   const filtered = useMemo(() => {
     if (!filter.trim()) return tree;
     const lower = filter.toLowerCase();
@@ -153,7 +183,11 @@ export function FileExplorer() {
               onDoubleClick={() => node.type === 'file' ? void openFile(node) : toggleFolder(node.id)}
               onClick={() => {
                 setSelectedFile(node.id);
-                if (node.type === 'folder') toggleFolder(node.id);
+                if (node.type === 'folder') {
+                  toggleFolder(node.id);
+                } else {
+                  void openFile(node);
+                }
               }}
             >
               {node.type === 'folder' ? (
@@ -174,7 +208,9 @@ export function FileExplorer() {
           </ContextMenuTrigger>
           <ContextMenuContent>
             <ContextMenuItem onSelect={() => void (node.type === 'file' ? openFile(node) : toggleFolder(node.id))}>打开</ContextMenuItem>
-            {/* 其他操作后续实现：重命名/复制路径/删除 */}
+            <ContextMenuItem onSelect={() => void renameNode(node)}>重命名</ContextMenuItem>
+            <ContextMenuItem onSelect={() => void copyPath(node)}>复制路径</ContextMenuItem>
+            <ContextMenuItem onSelect={() => void deleteNode(node)}>删除</ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
         {node.type === 'folder' && isExpanded && node.children && (
