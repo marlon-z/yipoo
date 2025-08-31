@@ -22,6 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from '@/hooks/use-toast';
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface TopBarProps {
   isDarkMode: boolean;
@@ -31,6 +33,9 @@ interface TopBarProps {
 }
 
 export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRightSidebarOpen }: TopBarProps) {
+  const { data: session, status } = useSession();
+  const authed = status === 'authenticated';
+
   return (
     <div className="h-12 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
       {/* Left Section */}
@@ -133,6 +138,36 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
         <Button variant="ghost" size="sm" onClick={() => { window.dispatchEvent(new CustomEvent('dw-force-save')); toast({ title: '已保存到本地' }); }}>
           <Save className="w-4 h-4 mr-1" /> 保存
         </Button>
+
+        {/* Auth menu */}
+        {!authed ? (
+          <Button variant="default" size="sm" onClick={() => signIn('github', { callbackUrl: '/' })}>
+            登录
+          </Button>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="px-2">
+                <Avatar className="w-6 h-6">
+                  <AvatarImage src={(session?.user as any)?.image || ''} alt={(session?.user as any)?.name || 'avatar'} />
+                  <AvatarFallback className="text-xs">{((session?.user as any)?.name || 'U').slice(0,1)}</AvatarFallback>
+                </Avatar>
+                <span className="ml-2 text-sm">{(session?.user as any)?.name}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-3 py-2 text-sm">
+                <div className="font-medium">{(session?.user as any)?.name}</div>
+                <div className="text-muted-foreground">{(session?.user as any)?.email}</div>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>个人资料</DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>设置</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => signOut({ callbackUrl: '/' })}>退出登录</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         <Button variant="ghost" size="sm">
           <Settings className="w-4 h-4" />

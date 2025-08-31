@@ -6,9 +6,24 @@ import { GitOverview } from '@/components/features/GitOverview';
 import { GitBranches } from '@/components/features/GitBranches';
 import { GitHistory } from '@/components/features/GitHistory';
 import { GitRemote } from '@/components/features/GitRemote';
-import { GitBranch, History, Globe, BarChart3 } from 'lucide-react';
+import { GitBranch, History, Globe, BarChart3, Lock } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 export function GitPanel() {
+  const { status } = useSession();
+  const authed = status === 'authenticated';
+
+  if (!authed) {
+    return (
+      <div className="h-full flex items-center justify-center text-sm text-muted-foreground p-4">
+        <div className="flex items-center gap-2">
+          <Lock className="w-4 h-4" />
+          请先在右上角登录 GitHub 后使用 Git 功能
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-full">
       <Tabs defaultValue="overview" className="flex-1 flex flex-col">
