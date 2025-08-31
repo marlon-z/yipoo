@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TopBar } from '@/components/layout/TopBar';
 import { LeftSidebar } from '@/components/layout/LeftSidebar';
 import { MainEditor } from '@/components/layout/MainEditor';
 import { RightSidebar } from '@/components/layout/RightSidebar';
 import { BottomStatusBar } from '@/components/layout/BottomStatusBar';
 import { cn } from '@/lib/utils';
+import { installDwSaveBridge } from '@/lib/dw';
 
 export default function Home() {
   const [sidebarMode, setSidebarMode] = useState<'files' | 'git'>('files');
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const off = installDwSaveBridge();
+    return () => off?.();
+  }, []);
 
   return (
     <div className={cn("h-screen flex flex-col overflow-hidden", isDarkMode ? "dark" : "")}> 
