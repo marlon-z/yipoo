@@ -4,8 +4,8 @@ import { useState } from 'react';
 import { ActivityBarView } from './ActivityBar';
 import { FileExplorer } from '@/components/features/FileExplorer';
 import { SearchView } from '@/components/features/SearchView';
-import { SourceControlView } from '@/components/features/SourceControlView';
-import { HistoryView } from '@/components/features/HistoryView';
+import { EnhancedSourceControlView } from '@/components/features/EnhancedSourceControlView';
+import { EnhancedHistoryView } from '@/components/features/EnhancedHistoryView';
 import { BranchesView } from '@/components/features/BranchesView';
 import { GitHubCloneView } from '@/components/features/GitHubCloneView';
 import { SettingsView } from '@/components/features/SettingsView';
@@ -67,9 +67,9 @@ export function PrimarySidebar({
       case 'search':
         return <SearchView />;
       case 'source-control':
-        return <SourceControlView />;
+        return <EnhancedSourceControlView />;
       case 'history':
-        return <HistoryView />;
+        return <EnhancedHistoryView />;
       case 'branches':
         return <BranchesView />;
       case 'github-clone':
