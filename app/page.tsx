@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { TopBar } from '@/components/layout/TopBar';
-import { LeftSidebar } from '@/components/layout/LeftSidebar';
+import { NewLeftSidebar } from '@/components/layout/NewLeftSidebar';
 import { MainEditor } from '@/components/layout/MainEditor';
 import { RightSidebar } from '@/components/layout/RightSidebar';
 import { BottomStatusBar } from '@/components/layout/BottomStatusBar';
@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { installDwSaveBridge } from '@/lib/dw';
 
 export default function Home() {
-  const [sidebarMode, setSidebarMode] = useState<'files' | 'git'>('files');
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -32,10 +31,7 @@ export default function Home() {
         
         <div className="flex-1 flex min-h-0 overflow-hidden">
           {/* Left Sidebar */}
-          <LeftSidebar 
-            mode={sidebarMode}
-            setMode={setSidebarMode}
-          />
+          <NewLeftSidebar />
           
           {/* Main Content */}
           <div className="flex-1 flex min-h-0 overflow-hidden">
