@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useGitCommitHistory } from '@/hooks/use-git';
+import { GitCommit } from '@/lib/git';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +28,7 @@ import {
   Search,
   Filter,
   RefreshCw,
-  GitCommit,
+  GitCommit as GitCommitIcon,
   Clock,
   User,
   FileText,
@@ -139,7 +140,7 @@ export function HistoryView() {
     }
   };
 
-  const renderCommitItem = (commit: CommitInfo) => {
+  const renderCommitItem = (commit: GitCommit) => {
     const isExpanded = expandedCommits.has(commit.id);
     const isSelected = selectedCommits.has(commit.id);
 
@@ -193,7 +194,7 @@ export function HistoryView() {
                       {commit.relativeTime}
                     </div>
                     <div className="flex items-center gap-1">
-                      <GitCommit className="w-3 h-3" />
+                      <GitCommitIcon className="w-3 h-3" />
                       {commit.shortHash}
                     </div>
                     <Badge variant="outline" className="h-4 px-1">

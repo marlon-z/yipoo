@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useGitRepository, useGitFileStatus } from '@/hooks/use-git';
+import { GitFileStatus } from '@/lib/git';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -101,7 +102,7 @@ export function SourceControlView() {
     }
   };
 
-  const renderFileItem = (file: FileChange, isStaged: boolean) => (
+  const renderFileItem = (file: GitFileStatus, isStaged: boolean) => (
     <ContextMenu key={file.path}>
       <ContextMenuTrigger asChild>
         <div className="flex items-center gap-2 p-2 hover:bg-accent rounded-md cursor-pointer text-sm group">

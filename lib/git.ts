@@ -303,7 +303,7 @@ class GitService {
     }
   }
 
-  // Placeholder methods for features that need more complex implementation
+  // Search files in cloned repositories stored in DW system
   async searchFiles(query: string, options?: {
     caseSensitive?: boolean;
     wholeWord?: boolean;
@@ -319,22 +319,210 @@ class GitService {
       preview: string;
     }>;
   }>> {
-    // Mock search results for demonstration
     if (!query.trim()) return [];
-    
-    return [
-      {
-        file: 'components/features/SearchView.tsx',
-        matches: [
-          {
-            line: 15,
-            column: 8,
-            text: `const searchQuery = '${query}';`,
-            preview: `  const searchQuery = '${query}';`
-          }
-        ]
+
+    try {
+      // Import DW functions dynamically to avoid circular dependencies
+      const { dwLoadTree, dwReadContent } = await import('./dw');
+      
+      const tree = await dwLoadTree();
+      if (!tree || tree.length === 0) {
+        return [];
       }
-    ];
+
+      const results: Array<{
+        file: string;
+        matches: Array<{
+          line: number;
+          column: number;
+          text: string;
+          preview: string;
+        }>;
+      }> = [];
+
+      // Recursively search through all files in the DW tree
+      const searchInNode = async (nodes: any[], basePath: string = '') => {
+        for (const node of nodes) {
+          if (node.type === 'file') {
+            const filePath = basePath ? `${basePath}/${node.name}` : node.name;
+            
+            // Apply include/exclude patterns
+            if (options?.includePattern && !this.matchesPattern(filePath, options.includePattern)) {
+              continue;
+            }
+            if (options?.excludePattern && this.matchesPattern(filePath, options.excludePattern)) {
+              continue;
+            }
+
+            try {
+              const content = await dwReadContent(node.id);
+              const contentMatches = this.searchInContent(content, query, options);
+              const filenameMatches = this.searchInFilename(filePath, query, options);
+              
+              const allMatches = [...contentMatches, ...filenameMatches];
+              
+              if (allMatches.length > 0) {
+                results.push({
+                  file: filePath,
+                  matches: allMatches
+                });
+              }
+            } catch (error) {
+              console.warn(`Failed to read content for file ${filePath}:`, error);
+            }
+          } else if (node.type === 'folder' && node.children) {
+            const folderPath = basePath ? `${basePath}/${node.name}` : node.name;
+            await searchInNode(node.children, folderPath);
+          }
+        }
+      };
+
+      await searchInNode(tree);
+      return results;
+
+    } catch (error) {
+      console.error('Search failed:', error);
+      return [];
+    }
+  }
+
+  // Helper method to search within file content
+  private searchInContent(content: string, query: string, options?: {
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    useRegex?: boolean;
+  }): Array<{
+    line: number;
+    column: number;
+    text: string;
+    preview: string;
+  }> {
+    const matches: Array<{
+      line: number;
+      column: number;
+      text: string;
+      preview: string;
+    }> = [];
+
+    const lines = content.split('\n');
+    let searchRegex: RegExp;
+
+    try {
+      if (options?.useRegex) {
+        const flags = options.caseSensitive ? 'g' : 'gi';
+        searchRegex = new RegExp(query, flags);
+      } else {
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = options?.wholeWord ? `\\b${escapedQuery}\\b` : escapedQuery;
+        const flags = options?.caseSensitive ? 'g' : 'gi';
+        searchRegex = new RegExp(pattern, flags);
+      }
+    } catch (error) {
+      // If regex is invalid, fall back to simple string search
+      const flags = options?.caseSensitive ? 'g' : 'gi';
+      const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      searchRegex = new RegExp(escapedQuery, flags);
+    }
+
+    lines.forEach((line, lineIndex) => {
+      let match;
+      searchRegex.lastIndex = 0; // Reset regex state
+      
+      while ((match = searchRegex.exec(line)) !== null) {
+        matches.push({
+          line: lineIndex + 1,
+          column: match.index + 1,
+          text: match[0],
+          preview: line.trim()
+        });
+        
+        // Prevent infinite loop for zero-width matches
+        if (match.index === searchRegex.lastIndex) {
+          searchRegex.lastIndex++;
+        }
+      }
+    });
+
+    return matches;
+  }
+
+  // Helper method to search in filename
+  private searchInFilename(filePath: string, query: string, options?: {
+    caseSensitive?: boolean;
+    wholeWord?: boolean;
+    useRegex?: boolean;
+  }): Array<{
+    line: number;
+    column: number;
+    text: string;
+    preview: string;
+  }> {
+    const matches: Array<{
+      line: number;
+      column: number;
+      text: string;
+      preview: string;
+    }> = [];
+
+    // Extract just the filename from the full path
+    const filename = filePath.split('/').pop() || filePath;
+    
+    let searchRegex: RegExp;
+
+    try {
+      if (options?.useRegex) {
+        const flags = options.caseSensitive ? 'g' : 'gi';
+        searchRegex = new RegExp(query, flags);
+      } else {
+        const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = options?.wholeWord ? `\\b${escapedQuery}\\b` : escapedQuery;
+        const flags = options?.caseSensitive ? 'g' : 'gi';
+        searchRegex = new RegExp(pattern, flags);
+      }
+    } catch (error) {
+      // If regex is invalid, fall back to simple string search
+      const flags = options?.caseSensitive ? 'g' : 'gi';
+      const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      searchRegex = new RegExp(escapedQuery, flags);
+    }
+
+    let match;
+    searchRegex.lastIndex = 0; // Reset regex state
+    
+    while ((match = searchRegex.exec(filename)) !== null) {
+      matches.push({
+        line: 0, // Use line 0 to indicate filename match
+        column: match.index + 1,
+        text: match[0],
+        preview: `📁 ${filename} (文件名匹配)`
+      });
+      
+      // Prevent infinite loop for zero-width matches
+      if (match.index === searchRegex.lastIndex) {
+        searchRegex.lastIndex++;
+      }
+    }
+
+    return matches;
+  }
+
+  // Helper method to match file patterns (glob-like)
+  private matchesPattern(filePath: string, pattern: string): boolean {
+    if (!pattern) return true;
+    
+    // Split pattern by comma and check if any pattern matches
+    const patterns = pattern.split(',').map(p => p.trim());
+    
+    return patterns.some(p => {
+      // Convert glob pattern to regex
+      const regexPattern = p
+        .replace(/\./g, '\\.')
+        .replace(/\*/g, '.*')
+        .replace(/\?/g, '.');
+      
+      const regex = new RegExp(`^${regexPattern}$`, 'i');
+      return regex.test(filePath);
+    });
   }
 }
 

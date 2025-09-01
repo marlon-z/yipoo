@@ -247,7 +247,7 @@ export function SearchView() {
               {searchResults.length > 0 ? (
                 <>在 {searchResults.length} 个文件中找到 {totalMatches} 个结果</>
               ) : (
-                <>没有找到结果</>
+                <>没有找到结果 - 请确保已通过 GitHub 克隆功能克隆了仓库</>
               )}
             </div>
           </div>
@@ -283,9 +283,12 @@ export function SearchView() {
                           className="flex items-start gap-2 p-2 hover:bg-accent/50 rounded text-xs cursor-pointer"
                         >
                           <span className="text-muted-foreground w-8 text-right shrink-0">
-                            {match.line}
+                            {match.line === 0 ? '📁' : match.line}
                           </span>
-                          <code className="flex-1 font-mono">
+                          <code className={cn(
+                            "flex-1",
+                            match.line === 0 ? "text-blue-600 dark:text-blue-400" : "font-mono"
+                          )}>
                             {highlightMatch(match.preview, searchQuery)}
                           </code>
                         </div>
@@ -303,6 +306,9 @@ export function SearchView() {
             <Search className="w-12 h-12 mb-4 opacity-50" />
             <p className="text-sm">输入搜索内容开始查找</p>
             <p className="text-xs mt-2 text-center max-w-xs">
+              搜索克隆到本地的仓库内容
+            </p>
+            <p className="text-xs mt-1 text-center max-w-xs">
               支持正则表达式、大小写敏感匹配，可设置包含/排除文件模式
             </p>
           </div>

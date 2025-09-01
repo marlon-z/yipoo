@@ -100,9 +100,9 @@ export async function GET(request: NextRequest) {
       html_url: repo.html_url,
       clone_url: repo.clone_url,
       owner: {
-        login: repo.owner.login,
-        avatar_url: repo.owner.avatar_url,
-        type: repo.owner.type,
+        login: repo.owner?.login || '',
+        avatar_url: repo.owner?.avatar_url || '',
+        type: repo.owner?.type || '',
       }
     }));
 

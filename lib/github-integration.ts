@@ -253,7 +253,7 @@ class GitHubIntegration {
 
     try {
       const branches = await githubService.getBranches();
-      const commits = await githubService.getCommitHistory(10);
+      const commits = await githubService.getCommitHistory({ per_page: 10 });
 
       return {
         repository: repo,

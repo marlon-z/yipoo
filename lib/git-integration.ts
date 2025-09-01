@@ -93,7 +93,7 @@ class GitIntegration {
       }
 
       // Check for deleted files (exist remotely but not locally)
-      for (const [relativePath, remoteFile] of remoteFiles) {
+      for (const [relativePath, remoteFile] of Array.from(remoteFiles.entries())) {
         const localExists = localFiles.some(f => 
           f.path.replace(`${repoFolderName}/`, '') === relativePath
         );

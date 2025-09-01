@@ -119,12 +119,12 @@ class GitHubService {
       
       return contents.map(item => ({
         path: item.path,
-        content: item.type === 'file' && 'content' in item ? 
+        content: item.type === 'file' && 'content' in item && item.content ? 
           Buffer.from(item.content, 'base64').toString('utf-8') : '',
         sha: item.sha,
         size: item.size,
         type: item.type as 'file' | 'dir',
-        download_url: 'download_url' in item ? item.download_url : undefined,
+        download_url: 'download_url' in item ? (item.download_url || undefined) : undefined,
       }));
     } catch (error) {
       console.error('Failed to get repository files:', error);
@@ -191,9 +191,9 @@ class GitHubService {
         },
         url: commit.html_url,
         stats: commit.stats ? {
-          additions: commit.stats.additions,
-          deletions: commit.stats.deletions,
-          total: commit.stats.total,
+          additions: commit.stats.additions || 0,
+          deletions: commit.stats.deletions || 0,
+          total: commit.stats.total || 0,
         } : undefined,
       }));
     } catch (error) {
