@@ -23,6 +23,23 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Github,
   Search,
   Star,
@@ -33,9 +50,15 @@ import {
   Globe,
   Loader2,
   RefreshCw,
-  Filter
+  Filter,
+  Plus,
+  Edit,
+  Trash2,
+  MoreVertical,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Repository {
   id: number;
@@ -79,6 +102,7 @@ export function RepositorySelector({
   onSelectRepository 
 }: RepositorySelectorProps) {
   const { data: session } = useSession();
+  const { toast } = useToast();
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,6 +110,16 @@ export function RepositorySelector({
   const [filterType, setFilterType] = useState('all');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  
+  // CRUD 相关状态
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
+  const [newRepoName, setNewRepoName] = useState('');
+  const [newRepoDescription, setNewRepoDescription] = useState('');
+  const [newRepoPrivate, setNewRepoPrivate] = useState(false);
+  const [crudLoading, setCrudLoading] = useState(false);
 
   const fetchRepositories = async (reset = false) => {
     if (!session?.accessToken) {
@@ -97,7 +131,7 @@ export function RepositorySelector({
     try {
       const params = new URLSearchParams({
         page: reset ? '1' : page.toString(),
-        per_page: '20',
+        per_page: '50',
         sort: sortBy,
         type: filterType,
         ...(searchQuery && { search: searchQuery })
@@ -107,7 +141,12 @@ export function RepositorySelector({
       const response = await fetch(`/api/github/repositories?${params}`);
       const data = await response.json();
 
-      console.log('API Response:', { status: response.status, data });
+      console.log('API Response:', { 
+        status: response.status, 
+        repositoriesCount: data.repositories?.length || 0,
+        totalRepositories: repositories.length + (data.repositories?.length || 0),
+        hasMore: (data.repositories || []).length === 50
+      });
 
       if (response.ok) {
         if (reset) {
@@ -116,7 +155,7 @@ export function RepositorySelector({
         } else {
           setRepositories(prev => [...prev, ...(data.repositories || [])]);
         }
-        setHasMore((data.repositories || []).length === 20);
+        setHasMore((data.repositories || []).length === 50);
       } else {
         console.error('Failed to fetch repositories:', data.error);
       }
@@ -144,14 +183,188 @@ export function RepositorySelector({
     }
   }, [searchQuery]);
 
+  // Handle page changes for load more
+  useEffect(() => {
+    if (page > 1 && open && session?.accessToken) {
+      fetchRepositories(false);
+    }
+  }, [page]);
+
   const handleLoadMore = () => {
-    setPage(prev => prev + 1);
-    fetchRepositories();
+    if (!loading && hasMore) {
+      setPage(prev => prev + 1);
+    }
   };
 
   const handleSelectRepository = (repo: Repository) => {
     onSelectRepository(repo);
     onOpenChange(false);
+  };
+
+  // 创建仓库
+  const handleCreateRepository = async () => {
+    if (!session?.accessToken || !newRepoName.trim()) return;
+    
+    setCrudLoading(true);
+    try {
+      const response = await fetch('/api/github/repositories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newRepoName.trim(),
+          description: newRepoDescription.trim(),
+          private: newRepoPrivate,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setShowCreateDialog(false);
+        setNewRepoName('');
+        setNewRepoDescription('');
+        setNewRepoPrivate(false);
+        fetchRepositories(true); // 重新加载仓库列表
+        toast({
+          title: "创建成功",
+          description: `仓库 "${newRepoName}" 已成功创建`,
+        });
+      } else {
+        const error = await response.json();
+        console.error('创建仓库失败:', error.error);
+        toast({
+          title: "创建失败",
+          description: error.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('创建仓库错误:', error);
+      toast({
+        title: "创建失败",
+        description: "网络错误或服务器异常",
+        variant: "destructive",
+      });
+    } finally {
+      setCrudLoading(false);
+    }
+  };
+
+  // 编辑仓库
+  const handleEditRepository = async () => {
+    if (!session?.accessToken || !selectedRepo || !newRepoName.trim()) return;
+    
+    setCrudLoading(true);
+    try {
+      const response = await fetch(`/api/github/repositories/${selectedRepo.name}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newRepoName.trim(),
+          description: newRepoDescription.trim(),
+          private: newRepoPrivate,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setShowEditDialog(false);
+        setSelectedRepo(null);
+        setNewRepoName('');
+        setNewRepoDescription('');
+        fetchRepositories(true); // 重新加载仓库列表
+        toast({
+          title: "编辑成功",
+          description: `仓库 "${selectedRepo?.name}" 已成功更新`,
+        });
+      } else {
+        const error = await response.json();
+        console.error('编辑仓库失败:', error.error);
+        toast({
+          title: "编辑失败",
+          description: error.error,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('编辑仓库错误:', error);
+      toast({
+        title: "编辑失败",
+        description: "网络错误或服务器异常",
+        variant: "destructive",
+      });
+    } finally {
+      setCrudLoading(false);
+    }
+  };
+
+  // 删除仓库
+  const handleDeleteRepository = async () => {
+    if (!session?.accessToken || !selectedRepo) return;
+    
+    setCrudLoading(true);
+    try {
+      // URL编码仓库名称以处理特殊字符
+      const encodedRepoName = encodeURIComponent(selectedRepo.name);
+      console.log('删除仓库:', selectedRepo.name, '编码后:', encodedRepoName);
+      
+      const response = await fetch(`/api/github/repositories/${encodedRepoName}`, {
+        method: 'DELETE',
+      });
+
+      console.log('删除请求响应状态:', response.status);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('删除成功响应:', result);
+        setShowDeleteDialog(false);
+        setSelectedRepo(null);
+        fetchRepositories(true); // 重新加载仓库列表
+        toast({
+          title: "删除成功",
+          description: `仓库 "${selectedRepo?.name}" 已成功删除`,
+        });
+      } else {
+        const error = await response.json();
+        console.error('删除仓库失败:', { 
+          status: response.status, 
+          error: error.error,
+          repoName: selectedRepo?.name 
+        });
+        toast({
+          title: "删除失败",
+          description: `${error.error} (状态码: ${response.status})`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('删除仓库错误:', error);
+      toast({
+        title: "删除失败",
+        description: "网络错误或服务器异常",
+        variant: "destructive",
+      });
+    } finally {
+      setCrudLoading(false);
+    }
+  };
+
+  // 打开编辑对话框
+  const openEditDialog = (repo: Repository) => {
+    setSelectedRepo(repo);
+    setNewRepoName(repo.name);
+    setNewRepoDescription(repo.description || '');
+    setNewRepoPrivate(repo.private);
+    setShowEditDialog(true);
+  };
+
+  // 打开删除对话框
+  const openDeleteDialog = (repo: Repository) => {
+    setSelectedRepo(repo);
+    setShowDeleteDialog(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -187,8 +400,9 @@ export function RepositorySelector({
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Github className="w-5 h-5" />
@@ -196,11 +410,29 @@ export function RepositorySelector({
           </DialogTitle>
           <DialogDescription>
             从您的GitHub仓库中选择要克隆的仓库
+            {repositories.length > 0 && (
+              <span className="ml-2 text-sm font-medium text-primary">
+                (已加载 {repositories.length} 个仓库{hasMore ? ', 可加载更多' : ''})
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
+        {/* Action Buttons */}
+        <div className="flex justify-start pb-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCreateDialog(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            新建仓库
+          </Button>
+        </div>
+
         {/* Filters and Search */}
-        <div className="flex flex-col gap-4 py-4">
+        <div className="flex flex-col gap-3 py-3 flex-shrink-0">
           <div className="flex gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -237,17 +469,19 @@ export function RepositorySelector({
         </div>
 
         {/* Repository List */}
-        <ScrollArea className="flex-1 max-h-96">
-          <div className="space-y-3">
-            {repositories.map((repo) => (
+        <div className="h-96 overflow-y-auto">
+          <div className="space-y-3 p-4">
+            {repositories.map((repo, index) => (
               <Card 
                 key={repo.id} 
-                className="cursor-pointer hover:bg-accent transition-colors"
-                onClick={() => handleSelectRepository(repo)}
+                className="hover:bg-accent transition-colors"
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
+                    <div 
+                      className="flex-1 min-w-0 cursor-pointer" 
+                      onClick={() => handleSelectRepository(repo)}
+                    >
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-semibold text-sm truncate">
                           {repo.name}
@@ -321,6 +555,35 @@ export function RepositorySelector({
                         </div>
                       )}
                     </div>
+                    
+                    {/* 操作菜单 */}
+                    <div className="flex-shrink-0 ml-4">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleSelectRepository(repo)}>
+                            <Github className="w-4 h-4 mr-2" />
+                            选择此仓库
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => openEditDialog(repo)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            编辑仓库
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => openDeleteDialog(repo)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            删除仓库
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -353,9 +616,167 @@ export function RepositorySelector({
                 </Button>
               </div>
             )}
+
           </div>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
-  );
-}
+
+    {/* 创建仓库对话框 */}
+    <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            创建新仓库
+          </DialogTitle>
+          <DialogDescription>
+            在您的GitHub账户中创建一个新的仓库
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">仓库名称</label>
+            <Input
+              value={newRepoName}
+              onChange={(e) => setNewRepoName(e.target.value)}
+              placeholder="输入仓库名称"
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium">描述 (可选)</label>
+            <Input
+              value={newRepoDescription}
+              onChange={(e) => setNewRepoDescription(e.target.value)}
+              placeholder="简短描述您的仓库"
+              className="mt-1"
+            />
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="private"
+              checked={newRepoPrivate}
+              onChange={(e) => setNewRepoPrivate(e.target.checked)}
+              className="rounded"
+            />
+            <label htmlFor="private" className="text-sm">
+              设为私有仓库
+            </label>
+          </div>
+        </div>
+        
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+            取消
+          </Button>
+          <Button 
+            onClick={handleCreateRepository}
+            disabled={!newRepoName.trim() || crudLoading}
+          >
+            {crudLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            创建仓库
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* 编辑仓库对话框 */}
+    <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Edit className="w-5 h-5" />
+            编辑仓库
+          </DialogTitle>
+          <DialogDescription>
+            修改仓库 "{selectedRepo?.name}" 的信息
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium">仓库名称</label>
+            <Input
+              value={newRepoName}
+              onChange={(e) => setNewRepoName(e.target.value)}
+              placeholder="输入仓库名称"
+              className="mt-1"
+            />
+          </div>
+          
+          <div>
+            <label className="text-sm font-medium">描述</label>
+            <Input
+              value={newRepoDescription}
+              onChange={(e) => setNewRepoDescription(e.target.value)}
+              placeholder="简短描述您的仓库"
+              className="mt-1"
+            />
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="edit-private"
+              checked={newRepoPrivate}
+              onChange={(e) => setNewRepoPrivate(e.target.checked)}
+              className="rounded"
+            />
+            <label htmlFor="edit-private" className="text-sm">
+              设为私有仓库
+            </label>
+          </div>
+        </div>
+        
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            取消
+          </Button>
+          <Button 
+            onClick={handleEditRepository}
+            disabled={!newRepoName.trim() || crudLoading}
+          >
+            {crudLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            保存更改
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* 删除仓库确认对话框 */}
+    <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+            <Trash2 className="w-5 h-5" />
+            删除仓库
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            您确定要删除仓库 "<strong>{selectedRepo?.name}</strong>" 吗？
+            <br />
+            <span className="text-destructive font-medium">
+              此操作无法撤销，仓库中的所有数据将永久丢失。
+            </span>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDeleteRepository}
+            disabled={crudLoading}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {crudLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            确认删除
+          </AlertDialogAction>
+        </AlertDialogFooter>
+             </AlertDialogContent>
+     </AlertDialog>
+   </>
+   );
+ }

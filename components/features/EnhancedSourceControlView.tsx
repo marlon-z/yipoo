@@ -20,6 +20,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
+import {
   GitBranch,
   GitCommit,
   Plus,
@@ -39,6 +45,7 @@ import {
 } from 'lucide-react';
 import { gitIntegration, ModifiedFile } from '@/lib/git-integration';
 import { githubService } from '@/lib/github';
+import { RepositorySelector, Repository } from './RepositorySelector';
 import { cn } from '@/lib/utils';
 
 export function EnhancedSourceControlView() {
@@ -51,6 +58,16 @@ export function EnhancedSourceControlView() {
   const [success, setSuccess] = useState<string | null>(null);
   const [showCommitDialog, setShowCommitDialog] = useState(false);
   const [commitInProgress, setCommitInProgress] = useState(false);
+  
+  // GitHub Clone functionality
+  const [activeTab, setActiveTab] = useState<'changes' | 'clone'>('changes');
+  const [repoUrl, setRepoUrl] = useState('');
+  const [showRepositorySelector, setShowRepositorySelector] = useState(false);
+  const [cloneProgress, setCloneProgress] = useState<{
+    status: 'idle' | 'analyzing' | 'downloading' | 'complete' | 'error';
+    message: string;
+    progress?: number;
+  }>({ status: 'idle', message: '' });
 
   // Set GitHub token when session changes
   useEffect(() => {
@@ -179,6 +196,87 @@ export function EnhancedSourceControlView() {
   const stagedFiles = modifiedFiles.filter(f => f.staged);
   const unstagedFiles = modifiedFiles.filter(f => !f.staged);
 
+  // GitHub Clone functions
+  const parseGitHubUrl = (url: string): { owner: string; repo: string } | null => {
+    const patterns = [
+      /github\.com\/([^\/]+)\/([^\/]+?)(?:\.git)?(?:\/.*)?$/,
+      /^([^\/]+)\/([^\/]+)$/
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        return { owner: match[1], repo: match[2] };
+      }
+    }
+    return null;
+  };
+
+  const startClone = async () => {
+    if (!repoUrl.trim()) {
+      setError('请输入有效的GitHub仓库URL');
+      return;
+    }
+
+    const repoInfo = parseGitHubUrl(repoUrl.trim());
+    if (!repoInfo) {
+      setError('无效的GitHub仓库URL格式');
+      return;
+    }
+
+    setError(null);
+    setCloneProgress({ status: 'analyzing', message: '正在分析仓库结构...' });
+
+    try {
+      // Set repository
+      await githubService.setRepository(repoInfo.owner, repoInfo.repo, 'main');
+
+      setCloneProgress({ status: 'downloading', message: '正在下载文件...', progress: 0 });
+
+      // Import GitHubIntegration
+      const { githubIntegration } = await import('@/lib/github-integration');
+      
+      const result = await githubIntegration.cloneRepositoryToLocal({
+        maxFileSize: 1024 * 1024, // 1MB limit
+        excludePatterns: [
+          '*.png', '*.jpg', '*.jpeg', '*.gif', '*.svg',
+          '*.pdf', '*.zip', '*.tar.gz',
+          'package-lock.json', 'yarn.lock'
+        ]
+      });
+      
+      if (result.success) {
+        setCloneProgress({ 
+          status: 'complete', 
+          message: `仓库克隆完成！已克隆 ${result.filesCloned} 个文件` 
+        });
+        setSuccess(`成功克隆仓库 ${repoInfo.owner}/${repoInfo.repo}`);
+        setRepoUrl('');
+        
+        // Switch to changes tab and reload files
+        setActiveTab('changes');
+        setTimeout(() => {
+          loadModifiedFiles();
+          window.dispatchEvent(new CustomEvent('refresh-file-explorer'));
+        }, 1000);
+      } else {
+        throw new Error(`克隆失败: ${result.errors.join(', ')}`);
+      }
+
+    } catch (err) {
+      setCloneProgress({ 
+        status: 'error', 
+        message: err instanceof Error ? err.message : '克隆失败' 
+      });
+      setError(err instanceof Error ? err.message : '克隆失败');
+    }
+  };
+
+  const handleRepositorySelect = (repository: Repository) => {
+    setRepoUrl(repository.full_name);
+    setShowRepositorySelector(false);
+  };
+
   const getStatusColor = (status: ModifiedFile['status']) => {
     switch (status) {
       case 'added': return 'text-green-600';
@@ -234,8 +332,8 @@ export function EnhancedSourceControlView() {
       <div className="p-3 border-b border-border">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium flex items-center gap-2">
-            <GitBranch className="w-4 h-4" />
-            源代码管理
+            <Github className="w-4 h-4" />
+            代码仓库
           </h2>
           <Button
             variant="ghost"
@@ -247,6 +345,18 @@ export function EnhancedSourceControlView() {
           </Button>
         </div>
       </div>
+
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'changes' | 'clone')} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="px-3 pt-1 pb-0">
+          <TabsList className="grid w-full grid-cols-2 h-8">
+            <TabsTrigger value="changes" className="text-xs h-7">本地变更</TabsTrigger>
+            <TabsTrigger value="clone" className="text-xs h-7">克隆仓库</TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="changes" className="flex-1 flex flex-col mt-0 p-0 min-h-0 data-[state=inactive]:hidden data-[state=inactive]:h-0 data-[state=inactive]:min-h-0">
+          <div className="flex-1 flex flex-col min-h-0">
 
       {/* Status Messages */}
       {error && (
@@ -488,6 +598,100 @@ export function EnhancedSourceControlView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="clone" className="mt-0 pt-2 px-3 pb-3 h-auto data-[state=inactive]:hidden data-[state=inactive]:h-0 data-[state=inactive]:min-h-0 data-[state=inactive]:p-0">
+          <div className="space-y-3 max-w-full">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">选择仓库</label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowRepositorySelector(true)}
+                  disabled={cloneProgress.status === 'analyzing' || cloneProgress.status === 'downloading'}
+                  className="hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <Github className="w-4 h-4 mr-2" />
+                  浏览我的仓库
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">或手动输入仓库URL</label>
+                <Input
+                  placeholder="https://github.com/owner/repo 或 owner/repo"
+                  value={repoUrl}
+                  onChange={(e) => setRepoUrl(e.target.value)}
+                  disabled={cloneProgress.status === 'analyzing' || cloneProgress.status === 'downloading'}
+                />
+                <p className="text-xs text-muted-foreground">
+                  支持完整URL或简短格式 (owner/repo)
+                </p>
+              </div>
+            </div>
+
+            <Button
+              onClick={startClone}
+              disabled={!repoUrl.trim() || cloneProgress.status === 'analyzing' || cloneProgress.status === 'downloading'}
+              className="w-full"
+            >
+              {cloneProgress.status === 'analyzing' || cloneProgress.status === 'downloading' ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  克隆中...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  克隆仓库
+                </>
+              )}
+            </Button>
+
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>• 克隆的仓库将保存到本地文件系统</p>
+              <p>• 支持 GitHub 公开和私有仓库</p>
+              <p>• 自动过滤大文件和二进制文件</p>
+            </div>
+
+            {cloneProgress.status !== 'idle' && (
+              <Card className="mt-4">
+                <CardContent className="pt-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      {cloneProgress.status === 'analyzing' || cloneProgress.status === 'downloading' ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : cloneProgress.status === 'complete' ? (
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-red-600" />
+                      )}
+                      <span className="text-sm">{cloneProgress.message}</span>
+                    </div>
+                    {cloneProgress.progress !== undefined && (
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${cloneProgress.progress}%` }}
+                        ></div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+                 </TabsContent>
+       </Tabs>
+
+       {/* Repository Selector Dialog */}
+       <RepositorySelector
+         open={showRepositorySelector}
+         onOpenChange={setShowRepositorySelector}
+         onSelectRepository={handleRepositorySelect}
+       />
+     </div>
+   );
+ }

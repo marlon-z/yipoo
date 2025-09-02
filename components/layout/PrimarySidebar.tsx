@@ -7,7 +7,7 @@ import { SearchView } from '@/components/features/SearchView';
 import { EnhancedSourceControlView } from '@/components/features/EnhancedSourceControlView';
 import { EnhancedHistoryView } from '@/components/features/EnhancedHistoryView';
 import { BranchesView } from '@/components/features/BranchesView';
-import { GitHubCloneView } from '@/components/features/GitHubCloneView';
+
 import { SettingsView } from '@/components/features/SettingsView';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -72,8 +72,7 @@ export function PrimarySidebar({
         return <EnhancedHistoryView />;
       case 'branches':
         return <BranchesView />;
-      case 'github-clone':
-        return <GitHubCloneView />;
+
       case 'settings':
         return <SettingsView />;
       default:

@@ -12,24 +12,7 @@ export function NewLeftSidebar({ className }: NewLeftSidebarProps) {
   const [activeView, setActiveView] = useState<ActivityBarView>('explorer');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(300);
-  const [badges, setBadges] = useState({
-    sourceControl: 3, // Mock: 3 uncommitted changes
-    search: 0,
-    history: 2, // Mock: 2 commits today
-  });
 
-  // Mock data updates (in real app, this would come from actual Git/search state)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBadges(prev => ({
-        ...prev,
-        sourceControl: Math.floor(Math.random() * 5),
-        history: Math.floor(Math.random() * 10),
-      }));
-    }, 30000); // Update every 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -106,7 +89,6 @@ export function NewLeftSidebar({ className }: NewLeftSidebarProps) {
       <ActivityBar
         activeView={activeView}
         onViewChange={handleViewChange}
-        badges={badges}
       />
 
       {/* Primary Sidebar */}
