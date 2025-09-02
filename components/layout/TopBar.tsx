@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Menu, 
@@ -12,7 +13,11 @@ import {
   Sun,
   PanelRight,
   Users,
-  Save
+  Save,
+  X,
+  Dot,
+  FileIcon,
+  FolderOpen
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -21,9 +26,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from '@/hooks/use-toast';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 interface TopBarProps {
   isDarkMode: boolean;
@@ -32,9 +39,181 @@ interface TopBarProps {
   setIsRightSidebarOpen: (value: boolean) => void;
 }
 
+interface CurrentFile {
+  id: string;
+  name: string;
+  path: string;
+  isModified: boolean;
+  lastSaved?: Date;
+}
+
+interface FileStatus {
+  status: 'saved' | 'saving' | 'modified' | 'error';
+  message?: string;
+}
+
 export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRightSidebarOpen }: TopBarProps) {
   const { data: session, status } = useSession();
   const authed = status === 'authenticated';
+  
+  const [currentFile, setCurrentFile] = useState<CurrentFile | null>(null);
+  const [fileStatus, setFileStatus] = useState<FileStatus>({ status: 'saved' });
+  const [isFileMenuOpen, setIsFileMenuOpen] = useState(false);
+
+  // 监听文件打开事件
+  useEffect(() => {
+    const handleFileOpen = (e: Event) => {
+      const ce = e as CustomEvent<{ id: string; name: string; path: string; content: string }>;
+      if (!ce.detail) return;
+      
+      setCurrentFile({
+        id: ce.detail.id,
+        name: ce.detail.name,
+        path: ce.detail.path,
+        isModified: false,
+        lastSaved: new Date()
+      });
+      setFileStatus({ status: 'saved' });
+    };
+
+    // 监听编辑器内容变化
+    const handleFileChange = () => {
+      if (currentFile) {
+        setCurrentFile(prev => prev ? { ...prev, isModified: true } : null);
+        setFileStatus({ status: 'modified' });
+      }
+    };
+
+    // 监听保存事件
+    const handleFileSave = (e: Event) => {
+      const ce = e as CustomEvent<{ id: string; content: string }>;
+      if (!ce.detail || !currentFile || ce.detail.id !== currentFile.id) return;
+      
+      setFileStatus({ status: 'saving' });
+      
+      // 模拟保存延迟
+      setTimeout(() => {
+        setCurrentFile(prev => prev ? { 
+          ...prev, 
+          isModified: false, 
+          lastSaved: new Date() 
+        } : null);
+        setFileStatus({ status: 'saved' });
+      }, 300);
+    };
+
+    // 监听强制保存事件
+    const handleForceSave = () => {
+      if (currentFile?.isModified) {
+        setFileStatus({ status: 'saving' });
+        window.dispatchEvent(new CustomEvent('dw-save-file', { 
+          detail: { id: currentFile.id, content: '' } 
+        }));
+      }
+    };
+
+    window.addEventListener('open-file', handleFileOpen as EventListener);
+    window.addEventListener('dw-save-file', handleFileSave as EventListener);
+    window.addEventListener('dw-force-save', handleForceSave);
+    document.addEventListener('input', handleFileChange, true);
+    document.addEventListener('keyup', handleFileChange, true);
+
+    return () => {
+      window.removeEventListener('open-file', handleFileOpen as EventListener);
+      window.removeEventListener('dw-save-file', handleFileSave as EventListener);
+      window.removeEventListener('dw-force-save', handleForceSave);
+      document.removeEventListener('input', handleFileChange, true);
+      document.removeEventListener('keyup', handleFileChange, true);
+    };
+  }, [currentFile]);
+
+  // 默认文件信息
+  const displayFile = currentFile || {
+    id: 'default',
+    name: 'untitled-1.md',
+    path: 'untitled-1.md',
+    isModified: false
+  };
+
+  // 获取文件状态指示器
+  const getStatusIndicator = () => {
+    const baseClasses = "w-2 h-2 rounded-full transition-colors duration-200";
+    
+    switch (fileStatus.status) {
+      case 'saved':
+        return currentFile?.isModified ? 
+          <Dot className="w-4 h-4 text-orange-500" /> :
+          <div className={cn(baseClasses, "bg-green-500")} />;
+      case 'saving':
+        return <div className={cn(baseClasses, "bg-blue-500 animate-pulse")} />;
+      case 'modified':
+        return <Dot className="w-4 h-4 text-orange-500" />;
+      case 'error':
+        return <div className={cn(baseClasses, "bg-red-500")} />;
+      default:
+        return <div className={cn(baseClasses, "bg-gray-400")} />;
+    }
+  };
+
+  // 获取状态描述
+  const getStatusText = () => {
+    switch (fileStatus.status) {
+      case 'saved':
+        return currentFile?.isModified ? '已修改' : '已保存';
+      case 'saving':
+        return '保存中...';
+      case 'modified':
+        return '已修改';
+      case 'error':
+        return '保存失败';
+      default:
+        return '未知状态';
+    }
+  };
+
+  // 新建文件
+  const createNewFile = () => {
+    const newId = 'file_' + Date.now();
+    const newName = `untitled-${Date.now()}.md`;
+    
+    const event = new CustomEvent('open-file', { 
+      detail: { 
+        id: newId, 
+        name: newName, 
+        path: newName, 
+        content: '' 
+      } 
+    });
+    window.dispatchEvent(event);
+    toast({ title: `已创建新文件: ${newName}` });
+  };
+
+  // 关闭文件
+  const closeFile = () => {
+    if (currentFile?.isModified) {
+      if (confirm('文件已修改，是否保存后关闭？')) {
+        window.dispatchEvent(new CustomEvent('dw-force-save'));
+        setTimeout(() => {
+          setCurrentFile(null);
+          setFileStatus({ status: 'saved' });
+        }, 500);
+      }
+    } else {
+      setCurrentFile(null);
+      setFileStatus({ status: 'saved' });
+    }
+  };
+
+  // 重命名文件
+  const renameFile = () => {
+    if (!currentFile) return;
+    
+    const newName = prompt('请输入新的文件名:', currentFile.name);
+    if (newName && newName !== currentFile.name) {
+      setCurrentFile(prev => prev ? { ...prev, name: newName, path: newName } : null);
+      toast({ title: `文件已重命名为: ${newName}` });
+    }
+  };
 
   return (
     <div className="h-12 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
@@ -53,12 +232,26 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>新建文件</DropdownMenuItem>
-              <DropdownMenuItem>打开文件</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => {
+              <DropdownMenuItem onClick={createNewFile}>
+                <FileIcon className="w-4 h-4 mr-2" />
+                新建文件
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                // 触发文件选择器
+                window.dispatchEvent(new CustomEvent('switch-activity-view', { 
+                  detail: { view: 'explorer' } 
+                }));
+              }}>
+                <FolderOpen className="w-4 h-4 mr-2" />
+                打开文件
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
                 window.dispatchEvent(new CustomEvent('dw-force-save'));
                 toast({ title: '已保存到本地' });
-              }}>保存</DropdownMenuItem>
+              }}>
+                <Save className="w-4 h-4 mr-2" />
+                保存
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem>导入</DropdownMenuItem>
             </DropdownMenuContent>
@@ -96,10 +289,71 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
         </div>
       </div>
 
-      {/* Center Section */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span>untitled-1.md</span>
-        <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+      {/* Center Section - File Display */}
+      <div className="flex items-center gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenu open={isFileMenuOpen} onOpenChange={setIsFileMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors max-w-xs"
+                  >
+                    <FileText className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{displayFile.name}</span>
+                    {getStatusIndicator()}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center">
+                  <div className="px-3 py-2 text-sm border-b">
+                    <div className="font-medium">{displayFile.name}</div>
+                    <div className="text-muted-foreground text-xs">{getStatusText()}</div>
+                    {currentFile?.lastSaved && (
+                      <div className="text-muted-foreground text-xs">
+                        最后保存: {currentFile.lastSaved.toLocaleTimeString()}
+                      </div>
+                    )}
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={renameFile} disabled={!currentFile}>
+                    重命名
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      if (currentFile?.isModified) {
+                        window.dispatchEvent(new CustomEvent('dw-force-save'));
+                      }
+                    }}
+                    disabled={!currentFile?.isModified}
+                  >
+                    保存
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={closeFile}
+                    disabled={!currentFile}
+                    className="text-red-600"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    关闭文件
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div className="text-xs">
+                <div>文件: {displayFile.name}</div>
+                <div>状态: {getStatusText()}</div>
+                {currentFile?.lastSaved && (
+                  <div>最后保存: {currentFile.lastSaved.toLocaleTimeString()}</div>
+                )}
+                <div className="mt-1 text-muted-foreground">点击查看更多选项</div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Right Section */}
@@ -135,7 +389,10 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           <PanelRight className="w-4 h-4" />
         </Button>
 
-        <Button variant="ghost" size="sm" onClick={() => { window.dispatchEvent(new CustomEvent('dw-force-save')); toast({ title: '已保存到本地' }); }}>
+        <Button variant="ghost" size="sm" onClick={() => { 
+          window.dispatchEvent(new CustomEvent('dw-force-save')); 
+          toast({ title: '已保存到本地' }); 
+        }}>
           <Save className="w-4 h-4 mr-1" /> 保存
         </Button>
 

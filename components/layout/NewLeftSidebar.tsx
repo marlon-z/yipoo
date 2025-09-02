@@ -14,7 +14,7 @@ export function NewLeftSidebar({ className }: NewLeftSidebarProps) {
   const [sidebarWidth, setSidebarWidth] = useState(300);
 
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts and external view switching
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey) {
@@ -60,8 +60,22 @@ export function NewLeftSidebar({ className }: NewLeftSidebarProps) {
       }
     };
 
+    // Handle external view switching from status bar
+    const handleViewSwitch = (e: CustomEvent) => {
+      const { view } = e.detail;
+      if (view) {
+        setActiveView(view as ActivityBarView);
+        setIsCollapsed(false);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('switch-activity-view', handleViewSwitch as EventListener);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('switch-activity-view', handleViewSwitch as EventListener);
+    };
   }, [isCollapsed]);
 
   const handleViewChange = (view: ActivityBarView) => {
