@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Crepe, CrepeFeature } from "@milkdown/crepe";
 import { Button } from "@/components/ui/button";
 import { Code, Eye } from "lucide-react";
-import { CodeMirrorSourceEditor } from "./CodeMirrorSourceEditor";
+import { CodeMirror6SourceEditor } from "./CodeMirror6SourceEditor";
 
 const defaultMarkdown = `# Milkdown
 
@@ -220,7 +220,7 @@ export function EnhancedMilkdownEditor() {
         )}
 
         {/* 源码模式编辑器 */}
-        <CodeMirrorSourceEditor
+        <CodeMirror6SourceEditor
           content={markdownContent}
           onChange={handleSourceContentChange}
           onToggleMode={toggleMode}
