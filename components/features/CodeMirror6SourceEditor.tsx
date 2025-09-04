@@ -8,7 +8,8 @@ import { oneDark } from "@codemirror/theme-one-dark";
 import { search, searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { history, defaultKeymap, historyKeymap, indentWithTab } from "@codemirror/commands";
-import { foldGutter, indentOnInput, bracketMatching, foldKeymap, syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
+import { foldGutter, indentOnInput, bracketMatching, foldKeymap, syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 import { highlightSelectionMatches as highlightSelMatches } from "@codemirror/search";
 import { Button } from "@/components/ui/button";
 import { 
@@ -42,6 +43,19 @@ export function CodeMirror6SourceEditor({
   const [charCount, setCharCount] = useState(0);
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const debounceTimerRef = useRef<number | null>(null);
+
+  // 创建简化的Markdown语法高亮主题
+  const createMarkdownTheme = (isDark: boolean) => {
+    return HighlightStyle.define([
+      { tag: tags.heading, fontWeight: "bold", color: isDark ? "#60a5fa" : "#1e40af" },
+      { tag: tags.strong, fontWeight: "bold", color: isDark ? "#f87171" : "#dc2626" },
+      { tag: tags.emphasis, fontStyle: "italic", color: isDark ? "#fb923c" : "#ea580c" },
+      { tag: tags.monospace, color: isDark ? "#f87171" : "#dc2626" },
+      { tag: tags.link, color: isDark ? "#60a5fa" : "#2563eb" },
+      { tag: tags.list, color: isDark ? "#34d399" : "#059669" },
+      { tag: tags.quote, color: isDark ? "#9ca3af" : "#6b7280", fontStyle: "italic" },
+    ]);
+  };
 
   // 监听全局主题变化
   useEffect(() => {
@@ -119,7 +133,8 @@ export function CodeMirror6SourceEditor({
     
     // Markdown 语言支持
     markdown(),
-    syntaxHighlighting(defaultHighlightStyle),
+    // 使用自定义语法高亮主题
+    syntaxHighlighting(createMarkdownTheme(isDarkTheme)),
     
     // 主题
     isDarkTheme ? oneDark : [],
@@ -156,6 +171,7 @@ export function CodeMirror6SourceEditor({
       '.cm-content': {
         padding: '16px',
         minHeight: '100%',
+        lineHeight: '1.6',
       },
       '.cm-focused': {
         outline: 'none',
@@ -169,6 +185,44 @@ export function CodeMirror6SourceEditor({
       },
       '.cm-foldGutter': {
         width: '20px',
+      },
+      // Markdown 语法高亮增强样式
+      '.cm-heading': {
+        fontWeight: 'bold',
+        lineHeight: '1.4',
+      },
+      '.cm-heading1': {
+        fontSize: '1.5em',
+      },
+      '.cm-heading2': {
+        fontSize: '1.3em',
+      },
+      '.cm-heading3': {
+        fontSize: '1.2em',
+      },
+      '.cm-heading4': {
+        fontSize: '1.1em',
+      },
+      // 代码块背景
+      '.cm-monospace': {
+        backgroundColor: isDarkTheme ? 'rgba(55, 65, 81, 0.6)' : 'rgba(243, 244, 246, 0.8)',
+        borderRadius: '3px',
+        padding: '2px 4px',
+        fontFamily: '"JetBrains Mono", "Fira Code", "Monaco", "Consolas", monospace',
+      },
+      // 引用块样式
+      '.cm-quote': {
+        borderLeft: `3px solid ${isDarkTheme ? '#4b5563' : '#d1d5db'}`,
+        paddingLeft: '12px',
+        marginLeft: '4px',
+        opacity: '0.8',
+      },
+      // 链接样式
+      '.cm-link': {
+        cursor: 'pointer',
+      },
+      '.cm-link:hover': {
+        opacity: '0.8',
       }
     })
   ];
