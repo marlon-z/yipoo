@@ -44,16 +44,52 @@ export function CodeMirror6SourceEditor({
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const debounceTimerRef = useRef<number | null>(null);
 
-  // 创建简化的Markdown语法高亮主题
+  // 创建VSCode风格的灰色暗色主题
+  const customDarkTheme = EditorView.theme({
+    '&': {
+      color: '#cccccc',
+      backgroundColor: '#1e1e1e'
+    },
+    '.cm-content': {
+      caretColor: '#cccccc'
+    },
+    '.cm-focused .cm-cursor': {
+      borderLeftColor: '#cccccc'
+    },
+    '.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
+      backgroundColor: '#264f78'
+    },
+    '.cm-panels': {
+      backgroundColor: '#252526',
+      color: '#cccccc'
+    },
+    '.cm-panels.cm-panels-top': {
+      borderBottom: '2px solid #3c3c3c'
+    },
+    '.cm-panels.cm-panels-bottom': {
+      borderTop: '2px solid #3c3c3c'
+    },
+    '.cm-searchMatch': {
+      backgroundColor: '#fbbf24',
+      color: '#1e1e1e'
+    },
+    '.cm-searchMatch.cm-searchMatch-selected': {
+      backgroundColor: '#f59e0b',
+      color: '#1e1e1e'
+    }
+  });
+
+  // 创建优化的Markdown语法高亮主题（提高暗色模式对比度）
   const createMarkdownTheme = (isDark: boolean) => {
+    // 强制所有标题都是黄色，无论什么模式
     return HighlightStyle.define([
-      { tag: tags.heading, fontWeight: "bold", color: isDark ? "#60a5fa" : "#1e40af" },
-      { tag: tags.strong, fontWeight: "bold", color: isDark ? "#f87171" : "#dc2626" },
-      { tag: tags.emphasis, fontStyle: "italic", color: isDark ? "#fb923c" : "#ea580c" },
-      { tag: tags.monospace, color: isDark ? "#f87171" : "#dc2626" },
-      { tag: tags.link, color: isDark ? "#60a5fa" : "#2563eb" },
-      { tag: tags.list, color: isDark ? "#34d399" : "#059669" },
-      { tag: tags.quote, color: isDark ? "#9ca3af" : "#6b7280", fontStyle: "italic" },
+      { tag: tags.heading, fontWeight: "bold", color: "#fbbf24" }, // 强制黄色标题
+      { tag: tags.strong, fontWeight: "bold", color: isDark ? "#fca5a5" : "#dc2626" },
+      { tag: tags.emphasis, fontStyle: "italic", color: isDark ? "#fdba74" : "#ea580c" },
+      { tag: tags.monospace, color: isDark ? "#f472b6" : "#dc2626" },
+      { tag: tags.link, color: isDark ? "#a78bfa" : "#2563eb" },
+      { tag: tags.list, color: isDark ? "#6ee7b7" : "#059669" },
+      { tag: tags.quote, color: isDark ? "#d1d5db" : "#6b7280", fontStyle: "italic" },
     ]);
   };
 
@@ -133,11 +169,12 @@ export function CodeMirror6SourceEditor({
     
     // Markdown 语言支持
     markdown(),
-    // 使用自定义语法高亮主题
-    syntaxHighlighting(createMarkdownTheme(isDarkTheme)),
     
-    // 主题
-    isDarkTheme ? oneDark : [],
+    // 主题 - 使用自定义暗色主题
+    isDarkTheme ? customDarkTheme : [],
+    
+    // 使用自定义语法高亮主题 - 放在最后确保优先级
+    syntaxHighlighting(createMarkdownTheme(isDarkTheme)),
     
     // 快捷键
     keymap.of([
@@ -180,49 +217,88 @@ export function CodeMirror6SourceEditor({
         lineHeight: '1.6',
       },
       '.cm-gutters': {
-        backgroundColor: isDarkTheme ? '#1e1e1e' : '#f8f9fa',
+        backgroundColor: isDarkTheme ? '#252526' : '#f8f9fa',
         border: 'none',
+        color: isDarkTheme ? '#858585' : '#6b7280',
       },
       '.cm-foldGutter': {
         width: '20px',
       },
-      // Markdown 语法高亮增强样式
+      // Markdown 语法高亮增强样式 - 强制覆盖oneDark主题
       '.cm-heading': {
-        fontWeight: 'bold',
+        fontWeight: 'bold !important',
         lineHeight: '1.4',
+        color: '#fbbf24 !important', // 强制所有标题都是黄色，用于测试
       },
       '.cm-heading1': {
         fontSize: '1.5em',
+        color: '#fbbf24 !important',
+        fontWeight: 'bold !important',
       },
       '.cm-heading2': {
         fontSize: '1.3em',
+        color: '#fbbf24 !important',
+        fontWeight: 'bold !important',
       },
       '.cm-heading3': {
         fontSize: '1.2em',
+        color: '#fbbf24 !important',
+        fontWeight: 'bold !important',
       },
       '.cm-heading4': {
         fontSize: '1.1em',
+        color: '#fbbf24 !important',
+        fontWeight: 'bold !important',
       },
-      // 代码块背景
+      '.cm-heading5': {
+        color: '#fbbf24 !important',
+        fontWeight: 'bold !important',
+      },
+      '.cm-heading6': {
+        color: '#fbbf24 !important',
+        fontWeight: 'bold !important',
+      },
+      // 代码块背景 - VSCode风格
       '.cm-monospace': {
-        backgroundColor: isDarkTheme ? 'rgba(55, 65, 81, 0.6)' : 'rgba(243, 244, 246, 0.8)',
-        borderRadius: '3px',
-        padding: '2px 4px',
+        backgroundColor: isDarkTheme ? '#2d2d30' : 'rgba(243, 244, 246, 0.8)',
+        borderRadius: '4px',
+        padding: '3px 6px',
         fontFamily: '"JetBrains Mono", "Fira Code", "Monaco", "Consolas", monospace',
+        border: isDarkTheme ? '1px solid #3c3c3c' : '1px solid rgba(209, 213, 219, 0.5)',
       },
-      // 引用块样式
+      // 引用块样式 - VSCode风格
       '.cm-quote': {
-        borderLeft: `3px solid ${isDarkTheme ? '#4b5563' : '#d1d5db'}`,
-        paddingLeft: '12px',
+        borderLeft: `4px solid ${isDarkTheme ? '#858585' : '#d1d5db'}`,
+        paddingLeft: '16px',
         marginLeft: '4px',
-        opacity: '0.8',
+        backgroundColor: isDarkTheme ? 'rgba(45, 45, 48, 0.5)' : 'rgba(249, 250, 251, 0.5)',
+        borderRadius: '0 4px 4px 0',
       },
-      // 链接样式
+      // 链接样式 - 使用紫色替代蓝色
       '.cm-link': {
         cursor: 'pointer',
+        textDecoration: 'underline',
+        textDecorationColor: isDarkTheme ? 'rgba(167, 139, 250, 0.5)' : 'rgba(37, 99, 235, 0.5)',
       },
       '.cm-link:hover': {
         opacity: '0.8',
+        backgroundColor: isDarkTheme ? 'rgba(167, 139, 250, 0.1)' : 'rgba(37, 99, 235, 0.1)',
+        borderRadius: '2px',
+      },
+      // 增强选中文本对比度 - 使用紫色系替代蓝色
+      '.cm-selectionMatch': {
+        backgroundColor: isDarkTheme ? 'rgba(167, 139, 250, 0.2)' : 'rgba(37, 99, 235, 0.2)',
+      },
+      '.cm-searchMatch': {
+        backgroundColor: isDarkTheme ? 'rgba(251, 191, 36, 0.3)' : 'rgba(252, 211, 77, 0.5)',
+        border: `1px solid ${isDarkTheme ? '#fbbf24' : '#f59e0b'}`,
+      },
+      // 优化光标和选区
+      '.cm-cursor': {
+        borderLeftColor: isDarkTheme ? '#f3f4f6' : '#1f2937',
+      },
+      '.cm-selectionBackground': {
+        backgroundColor: isDarkTheme ? 'rgba(167, 139, 250, 0.3)' : 'rgba(59, 130, 246, 0.2)',
       }
     })
   ];
