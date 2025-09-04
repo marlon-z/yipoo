@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -21,6 +21,41 @@ export function SettingsView() {
   const [autoSave, setAutoSave] = useState(true);
   const [showLineNumbers, setShowLineNumbers] = useState(true);
   const [gitAutoFetch, setGitAutoFetch] = useState(true);
+
+  // 监听全局主题变化
+  useEffect(() => {
+    const checkTheme = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setDarkMode(isDark);
+    };
+
+    // 初始检查
+    checkTheme();
+
+    // 监听主题变化
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          checkTheme();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // 处理主题切换 - 需要向上通知到全局状态
+  const handleDarkModeChange = (checked: boolean) => {
+    // 通过事件通知全局状态更改
+    window.dispatchEvent(new CustomEvent('theme-change', { 
+      detail: { isDark: checked } 
+    }));
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -46,7 +81,7 @@ export function SettingsView() {
                 <div className="text-sm">深色模式</div>
                 <div className="text-xs text-muted-foreground">切换到深色主题</div>
               </div>
-              <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+              <Switch checked={darkMode} onCheckedChange={handleDarkModeChange} />
             </div>
             
             <div className="flex items-center justify-between">

@@ -15,7 +15,21 @@ export default function Home() {
 
   useEffect(() => {
     const off = installDwSaveBridge();
-    return () => off?.();
+    
+    // 监听来自设置面板的主题变更事件
+    const handleThemeChange = (e: Event) => {
+      const ce = e as CustomEvent<{ isDark: boolean }>;
+      if (ce.detail) {
+        setIsDarkMode(ce.detail.isDark);
+      }
+    };
+
+    window.addEventListener('theme-change', handleThemeChange as EventListener);
+    
+    return () => {
+      off?.();
+      window.removeEventListener('theme-change', handleThemeChange as EventListener);
+    };
   }, []);
 
   return (

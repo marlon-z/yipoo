@@ -88,6 +88,7 @@ export function EnhancedMilkdownEditor() {
       featureConfigs: {
         [CrepeFeature.CodeMirror]: { searchPlaceholder: "搜索语言" },
         [CrepeFeature.Placeholder]: { text: "请输入..." },
+        [CrepeFeature.Prism]: true, // 启用语法高亮
       },
     });
     

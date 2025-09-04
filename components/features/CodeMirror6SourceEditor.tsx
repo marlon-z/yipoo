@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from "@codemirror/view";
-import { EditorState, Extension } from "@codemirror/state";
+import { EditorState, Extension, StateEffect } from "@codemirror/state";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { search, searchKeymap, highlightSelectionMatches } from "@codemirror/search";
@@ -17,8 +17,6 @@ import {
   Copy, 
   Download, 
   Search, 
-  Moon, 
-  Sun,
   RotateCcw,
   RotateCw,
   FileText
@@ -44,6 +42,34 @@ export function CodeMirror6SourceEditor({
   const [charCount, setCharCount] = useState(0);
   const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
   const debounceTimerRef = useRef<number | null>(null);
+
+  // 监听全局主题变化
+  useEffect(() => {
+    const checkTheme = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      console.log('CodeMirror6SourceEditor: 检测到主题变化:', isDark ? '暗色' : '浅色');
+      setIsDarkTheme(isDark);
+    };
+
+    // 初始检查
+    checkTheme();
+
+    // 监听主题变化
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          checkTheme();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // 更新统计信息
   const updateStats = (text: string, view?: EditorView) => {
@@ -196,6 +222,17 @@ export function CodeMirror6SourceEditor({
     }
   }, [content, isSourceMode]);
 
+  // 监听主题变化并重新配置编辑器
+  useEffect(() => {
+    if (viewRef.current) {
+      console.log('CodeMirror6SourceEditor: 重新配置编辑器主题:', isDarkTheme ? '暗色' : '浅色');
+      // 重新配置编辑器扩展以应用新主题
+      viewRef.current.dispatch({
+        effects: StateEffect.reconfigure.of(createExtensions())
+      });
+    }
+  }, [isDarkTheme]);
+
   // 复制内容
   const copyContent = async () => {
     if (viewRef.current) {
@@ -340,15 +377,6 @@ export function CodeMirror6SourceEditor({
           </Button>
           
           {/* 主题切换 */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsDarkTheme(!isDarkTheme)}
-            className="h-8 px-2"
-            title="切换主题"
-          >
-            {isDarkTheme ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
           
           {/* 导出功能 */}
           <Button
@@ -402,7 +430,6 @@ export function CodeMirror6SourceEditor({
         <div className="flex items-center gap-4">
           <span>UTF-8</span>
           <span>Markdown</span>
-          <span>{isDarkTheme ? '深色' : '浅色'}主题</span>
         </div>
       </div>
     </div>

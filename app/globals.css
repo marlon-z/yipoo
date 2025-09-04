@@ -126,7 +126,8 @@
 
 /* Fix conflicts for code blocks caused by global resets (Tailwind base) */
 .milkdown pre {
-  background-color: var(--crepe-color-surface, #f6f8fa);
+  background-color: var(--crepe-color-surface, hsl(var(--muted)));
+  color: var(--crepe-color-inline-code, hsl(var(--foreground)));
   border-radius: 8px;
   padding: 12px 14px;
   line-height: 1.6;
@@ -136,6 +137,7 @@
   background: transparent;
   font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
   font-size: 0.9em;
+  color: inherit;
 }
 /* Inline code chips */
 .milkdown :not(pre) > code {
@@ -143,4 +145,402 @@
   color: var(--crepe-color-inline-code, inherit);
   border-radius: 4px;
   padding: 2px 4px;
+}
+
+/* Milkdown 主题联动 - 与topbar暗色/浅色切换同步 */
+.dark .milkdown {
+  color-scheme: dark;
+  --crepe-color-surface: hsl(var(--muted));
+  --crepe-color-inline-area: hsl(var(--muted));
+  --crepe-color-inline-code: hsl(var(--muted-foreground));
+}
+
+.dark .milkdown .editor,
+.dark .milkdown .ProseMirror {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .milkdown pre {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border: 1px solid hsl(var(--border));
+}
+
+.dark .milkdown pre code {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark .milkdown :not(pre) > code {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark .milkdown blockquote {
+  border-left: 4px solid hsl(var(--border));
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark .milkdown table th,
+.dark .milkdown table td {
+  border-color: hsl(var(--border)) !important;
+}
+
+.dark .milkdown table th {
+  background-color: hsl(var(--muted)) !important;
+}
+
+/* 浅色模式 */
+:not(.dark) .milkdown {
+  color-scheme: light;
+  --crepe-color-surface: hsl(var(--muted));
+  --crepe-color-inline-area: hsl(var(--muted));
+  --crepe-color-inline-code: hsl(var(--muted-foreground));
+}
+
+:not(.dark) .milkdown .editor,
+:not(.dark) .milkdown .ProseMirror {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+:not(.dark) .milkdown pre {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+  border: 1px solid hsl(var(--border));
+}
+
+:not(.dark) .milkdown pre code {
+  color: hsl(var(--foreground)) !important;
+}
+
+:not(.dark) .milkdown :not(pre) > code {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+:not(.dark) .milkdown blockquote {
+  border-left: 4px solid hsl(var(--border));
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+:not(.dark) .milkdown table th,
+:not(.dark) .milkdown table td {
+  border-color: hsl(var(--border)) !important;
+}
+
+:not(.dark) .milkdown table th {
+  background-color: hsl(var(--muted)) !important;
+}
+
+/* 确保Milkdown编辑器继承全局主题 */
+.milkdown {
+  border-radius: 8px;
+  border: 1px solid hsl(var(--border));
+  transition: all 0.2s ease-in-out;
+}
+
+.milkdown .ProseMirror h1,
+.milkdown .ProseMirror h2,
+.milkdown .ProseMirror h3,
+.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h5,
+.milkdown .ProseMirror h6 {
+  color: hsl(var(--foreground)) !important;
+  font-weight: 600;
+}
+
+.milkdown .ProseMirror p {
+  color: hsl(var(--foreground)) !important;
+  margin: 0.5em 0;
+}
+
+.milkdown .ProseMirror ul,
+.milkdown .ProseMirror ol {
+  color: hsl(var(--foreground)) !important;
+}
+
+.milkdown .ProseMirror li {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* CodeMirror 6 编辑器主题同步 */
+.dark .cm-editor {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .cm-gutters {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border-right: 1px solid hsl(var(--border)) !important;
+}
+
+.dark .cm-lineNumbers .cm-gutterElement {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark .cm-activeLineGutter {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .cm-content {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .cm-focused {
+  outline: none !important;
+}
+
+/* 浅色模式的 CodeMirror */
+:not(.dark) .cm-editor {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+:not(.dark) .cm-gutters {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border-right: 1px solid hsl(var(--border)) !important;
+}
+
+:not(.dark) .cm-lineNumbers .cm-gutterElement {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+:not(.dark) .cm-activeLineGutter {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+:not(.dark) .cm-content {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+:not(.dark) .cm-focused {
+  outline: none !important;
+}
+
+/* ============================================ */
+/* Milkdown 代码块语法高亮 - 浅色/暗色模式区分 */
+/* ============================================ */
+
+/* 暗色模式的语法高亮 */
+.dark .milkdown .ProseMirror pre code .token.keyword,
+.dark .milkdown .ProseMirror pre code .token.class-name,
+.dark .milkdown .ProseMirror pre code .token.function {
+  color: #ff7b72 !important; /* 红色 - 关键字、类名、函数 */
+}
+
+.dark .milkdown .ProseMirror pre code .token.string,
+.dark .milkdown .ProseMirror pre code .token.template-string {
+  color: #a5d6ff !important; /* 浅蓝色 - 字符串 */
+}
+
+.dark .milkdown .ProseMirror pre code .token.number,
+.dark .milkdown .ProseMirror pre code .token.boolean {
+  color: #79c0ff !important; /* 蓝色 - 数字、布尔值 */
+}
+
+.dark .milkdown .ProseMirror pre code .token.comment,
+.dark .milkdown .ProseMirror pre code .token.prolog,
+.dark .milkdown .ProseMirror pre code .token.doctype {
+  color: #8b949e !important; /* 灰色 - 注释 */
+  font-style: italic;
+}
+
+.dark .milkdown .ProseMirror pre code .token.variable,
+.dark .milkdown .ProseMirror pre code .token.property,
+.dark .milkdown .ProseMirror pre code .token.attr-name {
+  color: #ffa657 !important; /* 橙色 - 变量、属性 */
+}
+
+.dark .milkdown .ProseMirror pre code .token.operator,
+.dark .milkdown .ProseMirror pre code .token.punctuation {
+  color: #ff7b72 !important; /* 红色 - 操作符、标点 */
+}
+
+.dark .milkdown .ProseMirror pre code .token.tag {
+  color: #7ee787 !important; /* 绿色 - HTML标签 */
+}
+
+.dark .milkdown .ProseMirror pre code .token.attr-value {
+  color: #a5d6ff !important; /* 浅蓝色 - 属性值 */
+}
+
+.dark .milkdown .ProseMirror pre code .token.constant,
+.dark .milkdown .ProseMirror pre code .token.symbol {
+  color: #d2a8ff !important; /* 紫色 - 常量、符号 */
+}
+
+/* 浅色模式的语法高亮 */
+:not(.dark) .milkdown .ProseMirror pre code .token.keyword,
+:not(.dark) .milkdown .ProseMirror pre code .token.class-name,
+:not(.dark) .milkdown .ProseMirror pre code .token.function {
+  color: #d73a49 !important; /* 深红色 - 关键字、类名、函数 */
+  font-weight: 600;
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .token.string,
+:not(.dark) .milkdown .ProseMirror pre code .token.template-string {
+  color: #032f62 !important; /* 深蓝色 - 字符串 */
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .token.number,
+:not(.dark) .milkdown .ProseMirror pre code .token.boolean {
+  color: #005cc5 !important; /* 蓝色 - 数字、布尔值 */
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .token.comment,
+:not(.dark) .milkdown .ProseMirror pre code .token.prolog,
+:not(.dark) .milkdown .ProseMirror pre code .token.doctype {
+  color: #6a737d !important; /* 灰色 - 注释 */
+  font-style: italic;
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .token.variable,
+:not(.dark) .milkdown .ProseMirror pre code .token.property,
+:not(.dark) .milkdown .ProseMirror pre code .token.attr-name {
+  color: #e36209 !important; /* 橙色 - 变量、属性 */
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .token.operator,
+:not(.dark) .milkdown .ProseMirror pre code .token.punctuation {
+  color: #d73a49 !important; /* 深红色 - 操作符、标点 */
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .token.tag {
+  color: #22863a !important; /* 绿色 - HTML标签 */
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .token.attr-value {
+  color: #032f62 !important; /* 深蓝色 - 属性值 */
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .token.constant,
+:not(.dark) .milkdown .ProseMirror pre code .token.symbol {
+  color: #6f42c1 !important; /* 紫色 - 常量、符号 */
+}
+
+/* 通用的语法高亮样式 */
+.milkdown .ProseMirror pre code .token.deleted {
+  color: #ff7b72 !important;
+  background-color: rgba(255, 123, 114, 0.1);
+}
+
+.milkdown .ProseMirror pre code .token.inserted {
+  color: #7ee787 !important;
+  background-color: rgba(126, 231, 135, 0.1);
+}
+
+.milkdown .ProseMirror pre code .token.important,
+.milkdown .ProseMirror pre code .token.bold {
+  font-weight: bold;
+}
+
+.milkdown .ProseMirror pre code .token.italic {
+  font-style: italic;
+}
+
+.milkdown .ProseMirror pre code .token.entity {
+  cursor: help;
+}
+
+/* ============================================ */
+/* 兼容不同语法高亮库的类名 */
+/* ============================================ */
+
+/* 暗色模式 - 兼容多种高亮库 */
+.dark .milkdown .ProseMirror pre code .hljs-keyword,
+.dark .milkdown .ProseMirror pre code .hljs-built_in,
+.dark .milkdown .ProseMirror pre code .hljs-type {
+  color: #ff7b72 !important;
+}
+
+.dark .milkdown .ProseMirror pre code .hljs-string,
+.dark .milkdown .ProseMirror pre code .hljs-title {
+  color: #a5d6ff !important;
+}
+
+.dark .milkdown .ProseMirror pre code .hljs-number,
+.dark .milkdown .ProseMirror pre code .hljs-literal {
+  color: #79c0ff !important;
+}
+
+.dark .milkdown .ProseMirror pre code .hljs-comment {
+  color: #8b949e !important;
+  font-style: italic;
+}
+
+.dark .milkdown .ProseMirror pre code .hljs-variable,
+.dark .milkdown .ProseMirror pre code .hljs-attribute {
+  color: #ffa657 !important;
+}
+
+/* 浅色模式 - 兼容多种高亮库 */
+:not(.dark) .milkdown .ProseMirror pre code .hljs-keyword,
+:not(.dark) .milkdown .ProseMirror pre code .hljs-built_in,
+:not(.dark) .milkdown .ProseMirror pre code .hljs-type {
+  color: #d73a49 !important;
+  font-weight: 600;
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .hljs-string,
+:not(.dark) .milkdown .ProseMirror pre code .hljs-title {
+  color: #032f62 !important;
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .hljs-number,
+:not(.dark) .milkdown .ProseMirror pre code .hljs-literal {
+  color: #005cc5 !important;
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .hljs-comment {
+  color: #6a737d !important;
+  font-style: italic;
+}
+
+:not(.dark) .milkdown .ProseMirror pre code .hljs-variable,
+:not(.dark) .milkdown .ProseMirror pre code .hljs-attribute {
+  color: #e36209 !important;
+}
+
+/* ============================================ */
+/* JavaScript 特定语法高亮 */
+/* ============================================ */
+
+/* 暗色模式 - JavaScript */
+.dark .milkdown .ProseMirror pre code[class*="language-javascript"] .token.keyword,
+.dark .milkdown .ProseMirror pre code[class*="language-js"] .token.keyword {
+  color: #ff7b72 !important; /* const, let, var, function 等 */
+}
+
+.dark .milkdown .ProseMirror pre code[class*="language-javascript"] .token.string,
+.dark .milkdown .ProseMirror pre code[class*="language-js"] .token.string {
+  color: #a5d6ff !important; /* 字符串 */
+}
+
+.dark .milkdown .ProseMirror pre code[class*="language-javascript"] .token.function,
+.dark .milkdown .ProseMirror pre code[class*="language-js"] .token.function {
+  color: #d2a8ff !important; /* 函数名 */
+}
+
+/* 浅色模式 - JavaScript */
+:not(.dark) .milkdown .ProseMirror pre code[class*="language-javascript"] .token.keyword,
+:not(.dark) .milkdown .ProseMirror pre code[class*="language-js"] .token.keyword {
+  color: #d73a49 !important; /* const, let, var, function 等 */
+  font-weight: 600;
+}
+
+:not(.dark) .milkdown .ProseMirror pre code[class*="language-javascript"] .token.string,
+:not(.dark) .milkdown .ProseMirror pre code[class*="language-js"] .token.string {
+  color: #032f62 !important; /* 字符串 */
+}
+
+:not(.dark) .milkdown .ProseMirror pre code[class*="language-javascript"] .token.function,
+:not(.dark) .milkdown .ProseMirror pre code[class*="language-js"] .token.function {
+  color: #6f42c1 !important; /* 函数名 */
 }
