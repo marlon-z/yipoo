@@ -79,11 +79,10 @@ export function CodeMirror6SourceEditor({
     }
   });
 
-  // 创建优化的Markdown语法高亮主题（提高暗色模式对比度）
+  // 创建优化的Markdown语法高亮主题（区分浅色和暗色模式）
   const createMarkdownTheme = (isDark: boolean) => {
-    // 强制所有标题都是黄色，无论什么模式
     return HighlightStyle.define([
-      { tag: tags.heading, fontWeight: "bold", color: "#fbbf24" }, // 强制黄色标题
+      { tag: tags.heading, fontWeight: "bold", color: isDark ? "#fbbf24" : "#b45309" }, // 暗色模式黄色，浅色模式深橙色
       { tag: tags.strong, fontWeight: "bold", color: isDark ? "#fca5a5" : "#dc2626" },
       { tag: tags.emphasis, fontStyle: "italic", color: isDark ? "#fdba74" : "#ea580c" },
       { tag: tags.monospace, color: isDark ? "#f472b6" : "#dc2626" },
@@ -224,38 +223,38 @@ export function CodeMirror6SourceEditor({
       '.cm-foldGutter': {
         width: '20px',
       },
-      // Markdown 语法高亮增强样式 - 强制覆盖oneDark主题
+      // Markdown 语法高亮增强样式 - 根据主题模式设置标题颜色
       '.cm-heading': {
         fontWeight: 'bold !important',
         lineHeight: '1.4',
-        color: '#fbbf24 !important', // 强制所有标题都是黄色，用于测试
+        color: isDarkTheme ? '#fbbf24 !important' : '#b45309 !important', // 暗色模式黄色，浅色模式深橙色
       },
       '.cm-heading1': {
         fontSize: '1.5em',
-        color: '#fbbf24 !important',
+        color: isDarkTheme ? '#fbbf24 !important' : '#b45309 !important',
         fontWeight: 'bold !important',
       },
       '.cm-heading2': {
         fontSize: '1.3em',
-        color: '#fbbf24 !important',
+        color: isDarkTheme ? '#fbbf24 !important' : '#b45309 !important',
         fontWeight: 'bold !important',
       },
       '.cm-heading3': {
         fontSize: '1.2em',
-        color: '#fbbf24 !important',
+        color: isDarkTheme ? '#fbbf24 !important' : '#b45309 !important',
         fontWeight: 'bold !important',
       },
       '.cm-heading4': {
         fontSize: '1.1em',
-        color: '#fbbf24 !important',
+        color: isDarkTheme ? '#fbbf24 !important' : '#b45309 !important',
         fontWeight: 'bold !important',
       },
       '.cm-heading5': {
-        color: '#fbbf24 !important',
+        color: isDarkTheme ? '#fbbf24 !important' : '#b45309 !important',
         fontWeight: 'bold !important',
       },
       '.cm-heading6': {
-        color: '#fbbf24 !important',
+        color: isDarkTheme ? '#fbbf24 !important' : '#b45309 !important',
         fontWeight: 'bold !important',
       },
       // 代码块背景 - VSCode风格
