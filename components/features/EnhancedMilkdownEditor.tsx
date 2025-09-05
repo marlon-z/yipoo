@@ -5,6 +5,10 @@ import { Crepe, CrepeFeature } from "@milkdown/crepe";
 import { Button } from "@/components/ui/button";
 import { Code, Eye } from "lucide-react";
 import { CodeMirror6SourceEditor } from "./CodeMirror6SourceEditor";
+import { milkdownUploader, UploadResult } from "@/lib/upload-handler";
+import { Editor } from "@milkdown/core";
+import { commonmark } from "@milkdown/preset-commonmark";
+import { upload } from "@milkdown/plugin-upload";
 
 const defaultMarkdown = `# Milkdown
 
@@ -50,6 +54,11 @@ export function EnhancedMilkdownEditor() {
   // 源码模式状态
   const [isSourceMode, setIsSourceMode] = useState(false);
   const [markdownContent, setMarkdownContent] = useState(defaultMarkdown);
+  const [uploadProgress, setUploadProgress] = useState<{
+    isUploading: boolean;
+    progress: number;
+    fileName?: string;
+  }>({ isUploading: false, progress: 0 });
 
   const dispatchSave = () => {
     if (!currentFileIdRef.current) return;
@@ -72,7 +81,9 @@ export function EnhancedMilkdownEditor() {
   };
 
   const createEditor = (markdown?: string) => {
-    if (!containerRef.current || isSourceMode) return;
+    if (!containerRef.current || isSourceMode) {
+      return;
+    }
     
     try {
       // destroy old
@@ -82,13 +93,32 @@ export function EnhancedMilkdownEditor() {
     // 使用传入的 markdown 或当前状态中的 markdownContent
     const content = markdown !== undefined ? markdown : markdownContent;
     
+    // 配置上传处理器
+    const uploadHandler = async (files: FileList): Promise<string> => {
+      try {
+        const results = await milkdownUploader(files);
+        if (results.length > 0) {
+          const result = results[0]; // 取第一个文件
+          // 根据文件类型返回不同的Markdown格式
+          if (result.url.startsWith('data:image/')) {
+            return `![${result.alt || ''}](${result.url})`;
+          } else {
+            return `[${result.title || result.alt || '文件'}](${result.url})`;
+          }
+        }
+        return '';
+      } catch (error) {
+        console.error('文件上传失败:', error);
+        throw error;
+      }
+    };
+
     const editor = new Crepe({
       root: containerRef.current,
       defaultValue: content,
       featureConfigs: {
         [CrepeFeature.CodeMirror]: { searchPlaceholder: "搜索语言" },
         [CrepeFeature.Placeholder]: { text: "请输入..." },
-        [CrepeFeature.Prism]: true, // 启用语法高亮
       },
     });
     
@@ -122,6 +152,64 @@ export function EnhancedMilkdownEditor() {
   const handleSourceContentChange = (content: string) => {
     setMarkdownContent(content);
     debounceSave(() => dispatchSave(), 400);
+  };
+
+  // 处理文件上传
+  const handleFileUpload = async (files: FileList) => {
+    if (files.length === 0) return;
+    
+    setUploadProgress({ isUploading: true, progress: 0, fileName: files[0].name });
+    
+    try {
+      const results = await milkdownUploader(files);
+      
+      // 模拟上传进度
+      for (let i = 0; i <= 100; i += 20) {
+        setUploadProgress(prev => ({ ...prev, progress: i }));
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      if (results.length > 0) {
+        const result = results[0];
+        
+        // 插入Markdown格式的内容到编辑器
+        let insertText = '';
+        if (result.url.startsWith('data:image/')) {
+          insertText = `![${result.alt || ''}](${result.url})`;
+        } else {
+          insertText = `[${result.title || result.alt || '文件'}](${result.url})`;
+        }
+        
+        // 获取当前内容并插入新内容
+        const newContent = markdownContent + '\n\n' + insertText;
+        
+        // 更新状态（useEffect会自动重新创建编辑器）
+        setMarkdownContent(newContent);
+        
+        // 触发保存
+        setTimeout(() => {
+          dispatchSave();
+        }, 500);
+      }
+    } catch (error) {
+      console.error('文件上传失败:', error);
+      alert('文件上传失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    } finally {
+      setUploadProgress({ isUploading: false, progress: 0 });
+    }
+  };
+
+  // 处理拖拽上传
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleFileUpload(files);
+    }
   };
 
 
@@ -159,7 +247,26 @@ export function EnhancedMilkdownEditor() {
 
       const onForceSave = () => dispatchSave();
 
+      // 监听来自TopBar的文件上传事件
+      const onEditorFileUpload = (e: Event) => {
+        const ce = e as CustomEvent<{ files: FileList }>;
+        if (ce.detail?.files) {
+          handleFileUpload(ce.detail.files);
+        }
+      };
+
+      // 监听获取编辑器内容事件
+      const onGetEditorContent = (e: Event) => {
+        const ce = e as CustomEvent<{ callback: (content: string) => void }>;
+        if (ce.detail?.callback) {
+          const content = isSourceMode ? markdownContent : (editorRef.current?.getMarkdown?.() || markdownContent);
+          ce.detail.callback(content);
+        }
+      };
+
       window.addEventListener('open-file', onOpen as EventListener);
+      window.addEventListener('editor-file-upload', onEditorFileUpload as EventListener);
+      window.addEventListener('get-editor-content', onGetEditorContent as EventListener);
       window.addEventListener('dw-force-save', onForceSave as EventListener);
       
       const el = containerRef.current;
@@ -179,6 +286,8 @@ export function EnhancedMilkdownEditor() {
 
       return () => {
         window.removeEventListener('open-file', onOpen as EventListener);
+        window.removeEventListener('editor-file-upload', onEditorFileUpload as EventListener);
+        window.removeEventListener('get-editor-content', onGetEditorContent as EventListener);
         window.removeEventListener('dw-force-save', onForceSave as EventListener);
         el.removeEventListener('input', onDomInput, true);
         el.removeEventListener('keyup', onDomInput, true);
@@ -192,13 +301,31 @@ export function EnhancedMilkdownEditor() {
         editorRef.current = null;
       };
     }
-  }, [isSourceMode]); // 只依赖 isSourceMode，避免内容更新时重新创建编辑器
+  }, [isSourceMode, markdownContent]); // 依赖 isSourceMode 和 markdownContent
 
   return (
     <div className="h-full min-h-0 overflow-hidden flex flex-col">
-      {/* 工具栏 */}
+      {/* 工具栏 - 始终显示切换按钮，上传时显示进度 */}
       {!isSourceMode && (
-        <div className="flex items-center justify-end px-4 py-2 border-b bg-muted/50">
+        <div className="flex items-center justify-between px-4 py-2 bg-muted/50">
+          {/* 左侧：上传进度显示（仅在上传时显示） */}
+          <div className="flex items-center gap-2">
+            {uploadProgress.isUploading && (
+              <div className="flex items-center gap-2">
+                <div className="w-32 bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${uploadProgress.progress}%` }}
+                  />
+                </div>
+                <span className="text-xs text-gray-600">
+                  {uploadProgress.fileName} ({uploadProgress.progress}%)
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* 右侧：模式切换 */}
           <Button
             variant="ghost"
             size="sm"
@@ -215,8 +342,12 @@ export function EnhancedMilkdownEditor() {
       <div className="flex-1 relative min-h-0 overflow-hidden">
         {/* Milkdown 编辑器 */}
         {!isSourceMode && (
-          <div className="milkdown h-full min-h-0 overflow-auto">
-            <div ref={containerRef} className="min-h-full" />
+          <div 
+            className="milkdown h-full w-full min-h-0 overflow-auto bg-background"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            <div ref={containerRef} className="h-full min-h-full bg-background" />
           </div>
         )}
 

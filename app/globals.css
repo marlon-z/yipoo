@@ -109,14 +109,21 @@
 
 /* Milkdown base height & padding */
 .milkdown {
-  height: 100%;
+  height: 100% !important;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 .milkdown .ProseMirror {
+  flex: 1;
+  height: 100%;
   min-height: 100%;
   outline: none;
   padding: 12px;
   caret-color: currentColor;
   cursor: text;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Milkdown scoped transitions to restore hover effects without global side effects */
@@ -132,6 +139,7 @@
   padding: 12px 14px;
   line-height: 1.6;
   overflow: auto;
+  border: 1px solid hsl(var(--border)); /* 添加默认边框 */
 }
 .milkdown pre code {
   background: transparent;
@@ -161,10 +169,14 @@
   color: hsl(var(--foreground)) !important;
 }
 
-.dark .milkdown pre {
+.dark .milkdown pre,
+.dark .milkdown .ProseMirror pre {
   background-color: hsl(var(--muted)) !important;
   color: hsl(var(--muted-foreground)) !important;
-  border: 1px solid hsl(var(--border));
+  border: none !important; /* 完全移除边框 */
+  border-bottom: none !important; /* 特别移除底部边框 */
+  box-shadow: none !important; /* 移除可能的阴影 */
+  outline: none !important; /* 移除可能的轮廓 */
 }
 
 .dark .milkdown pre code {
@@ -237,9 +249,34 @@
 
 /* 确保Milkdown编辑器继承全局主题 */
 .milkdown {
-  border-radius: 8px;
-  border: 1px solid hsl(var(--border));
+  /* 完全移除边框和圆角，避免与外层容器冲突 */
+  border: none !important;
+  border-radius: 0 !important;
   transition: all 0.2s ease-in-out;
+  background-color: hsl(var(--background)) !important;
+}
+
+/* 浅色模式和暗色模式都不显示边框和圆角 */
+:not(.dark) .milkdown,
+.dark .milkdown {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* 确保编辑器容器完全填充背景 */
+.milkdown,
+.milkdown > *,
+.milkdown .editor,
+.milkdown .ProseMirror {
+  background-color: hsl(var(--background)) !important;
+}
+
+/* 暗色模式下的额外保证 */
+.dark .milkdown,
+.dark .milkdown > *,
+.dark .milkdown .editor,
+.dark .milkdown .ProseMirror {
+  background-color: hsl(var(--background)) !important;
 }
 
 .milkdown .ProseMirror h1,

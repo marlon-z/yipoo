@@ -37,6 +37,7 @@
     "@milkdown/plugin-slash": "^7.15.5",
     "@milkdown/plugin-table": "^5.3.1",
     "@milkdown/plugin-tooltip": "^7.15.5",
+    "@milkdown/plugin-upload": "^7.15.5",
     "@milkdown/preset-commonmark": "^7.15.5",
     "@milkdown/preset-gfm": "^7.15.5",
     "@milkdown/prose": "^7.15.5",

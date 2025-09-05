@@ -17,7 +17,13 @@ import {
   X,
   Dot,
   FileIcon,
-  FolderOpen
+  FolderOpen,
+  Upload,
+  Copy,
+  HelpCircle,
+  BookOpen,
+  Info,
+  ExternalLink
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -215,6 +221,77 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
     }
   };
 
+  // 获取编辑器内容
+  const getEditorContent = (): string => {
+    // 通过自定义事件获取编辑器内容
+    let content = '';
+    const event = new CustomEvent('get-editor-content', { 
+      detail: { callback: (editorContent: string) => { content = editorContent; } }
+    });
+    window.dispatchEvent(event);
+    return content || '';
+  };
+
+  // 下载为Markdown文件
+  const downloadAsMarkdown = (content: string) => {
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = currentFile?.name || 'untitled.md';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast({ title: `已下载文件: ${currentFile?.name || 'untitled.md'}` });
+  };
+
+  // 复制到剪贴板
+  const copyToClipboard = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast({ title: '内容已复制到剪贴板' });
+    } catch (error) {
+      // 降级方案
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      toast({ title: '内容已复制到剪贴板' });
+    }
+  };
+
+  // 在编辑器中打开帮助文档
+  const openHelpInEditor = async (title: string, filename: string) => {
+    try {
+      const response = await fetch(`/api/docs/help/${filename}`);
+      if (response.ok) {
+        const content = await response.text();
+        // 生成唯一的文件ID
+        const fileId = `help_${Date.now()}`;
+        const fileName = `${title}.md`;
+        
+        // 触发文件打开事件，在编辑器中显示帮助文档
+        const event = new CustomEvent('open-file', { 
+          detail: { 
+            id: fileId, 
+            name: fileName, 
+            path: fileName, 
+            content: content 
+          } 
+        });
+        window.dispatchEvent(event);
+        toast({ title: `已打开帮助文档: ${title}` });
+      } else {
+        toast({ title: '无法加载文档', description: '文档文件不存在或无法访问' });
+      }
+    } catch (error) {
+      toast({ title: '加载文档失败', description: '请检查网络连接' });
+    }
+  };
+
   return (
     <div className="h-12 bg-card border-b border-border flex items-center justify-between px-4 shrink-0">
       {/* Left Section */}
@@ -253,6 +330,25 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
                 保存
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => {
+                // 触发文件上传
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.multiple = true;
+                input.accept = 'image/*,application/pdf,text/plain,text/markdown';
+                input.onchange = (e) => {
+                  const files = (e.target as HTMLInputElement).files;
+                  if (files && files.length > 0) {
+                    window.dispatchEvent(new CustomEvent('editor-file-upload', { 
+                      detail: { files } 
+                    }));
+                  }
+                };
+                input.click();
+              }}>
+                <Upload className="w-4 h-4 mr-2" />
+                上传文件
+              </DropdownMenuItem>
               <DropdownMenuItem>导入</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -275,17 +371,40 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm">
-                视图
+                <HelpCircle className="w-4 h-4 mr-1" />
+                帮助
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>所见即所得</DropdownMenuItem>
-              <DropdownMenuItem>源码模式</DropdownMenuItem>
-              <DropdownMenuItem>分屏模式</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                openHelpInEditor('快速入门指南', '快速入门指南.md');
+              }}>
+                <BookOpen className="w-4 h-4 mr-2" />
+                快速入门指南
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                openHelpInEditor('Markdown语法指南', 'Markdown语法指南.md');
+              }}>
+                <FileText className="w-4 h-4 mr-2" />
+                Markdown 语法指南
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                openHelpInEditor('常见问题解答', '常见问题解答.md');
+              }}>
+                <HelpCircle className="w-4 h-4 mr-2" />
+                常见问题解答
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>全屏</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                // 打开关于页面
+                openHelpInEditor('关于 MarkdownIDE', '关于.md');
+              }}>
+                <Info className="w-4 h-4 mr-2" />
+                关于 MarkdownIDE
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
         </div>
       </div>
 
@@ -363,10 +482,36 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           同步
         </Button>
         
-        <Button variant="ghost" size="sm">
-          <Download className="w-4 h-4 mr-1" />
-          导出
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <Download className="w-4 h-4 mr-1" />
+              导出
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => {
+              // 获取编辑器内容并下载为Markdown文件
+              const content = getEditorContent();
+              if (content) {
+                downloadAsMarkdown(content);
+              }
+            }}>
+              <Download className="w-4 h-4 mr-2" />
+              下载为 Markdown
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => {
+              // 复制编辑器内容到剪贴板
+              const content = getEditorContent();
+              if (content) {
+                copyToClipboard(content);
+              }
+            }}>
+              <Copy className="w-4 h-4 mr-2" />
+              复制内容
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <Button variant="ghost" size="sm">
           <Users className="w-4 h-4 mr-1" />

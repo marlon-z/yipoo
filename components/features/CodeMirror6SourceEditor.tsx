@@ -15,8 +15,6 @@ import { Button } from "@/components/ui/button";
 import { 
   Code, 
   Eye, 
-  Copy, 
-  Download, 
   Search, 
   RotateCcw,
   RotateCw,
@@ -362,34 +360,7 @@ export function CodeMirror6SourceEditor({
     }
   }, [isDarkTheme]);
 
-  // 复制内容
-  const copyContent = async () => {
-    if (viewRef.current) {
-      const content = viewRef.current.state.doc.toString();
-      try {
-        await navigator.clipboard.writeText(content);
-        // 可以添加 toast 提示
-      } catch (err) {
-        console.error('复制失败:', err);
-      }
-    }
-  };
 
-  // 下载文件
-  const downloadFile = () => {
-    if (viewRef.current) {
-      const content = viewRef.current.state.doc.toString();
-      const blob = new Blob([content], { type: 'text/markdown' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'document.md';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
 
   // 打开搜索
   const openSearch = () => {
@@ -506,26 +477,6 @@ export function CodeMirror6SourceEditor({
           </Button>
           
           {/* 主题切换 */}
-          
-          {/* 导出功能 */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={copyContent}
-            className="h-8 px-2"
-            title="复制内容"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={downloadFile}
-            className="h-8 px-2"
-            title="下载文件"
-          >
-            <Download className="h-4 w-4" />
-          </Button>
           
           {/* 切换模式 */}
           <Button
