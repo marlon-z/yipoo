@@ -6,13 +6,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RenderSettings } from '@/components/features/RenderSettings';
 import { ExportPanel } from '@/components/features/ExportPanel';
 import { CollabPanel } from '@/components/features/CollabPanel';
-import { Settings, Download, Users, Palette } from 'lucide-react';
+import { Settings, Download, Users, Palette, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function RightSidebar() {
   return (
     <div className="w-80 bg-card border-l border-border flex flex-col shrink-0">
-      <div className="h-10 border-b border-border flex items-center px-3">
+      <div className="h-10 border-b border-border flex items-center justify-between px-3">
         <span className="text-sm font-medium text-muted-foreground">设置面板</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          onClick={() => window.dispatchEvent(new CustomEvent('toggle-right-sidebar'))}
+          title="关闭"
+        >
+          <X className="w-4 h-4" />
+        </Button>
       </div>
       
       <div className="flex-1 overflow-auto p-4">

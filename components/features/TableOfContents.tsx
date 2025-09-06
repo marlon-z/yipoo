@@ -53,6 +53,26 @@ export function TableOfContents() {
     return () => window.removeEventListener('toc-settings-change', handler as EventListener);
   }, []);
 
+  // 初始化本地 TOC 偏好
+  useEffect(() => {
+    try {
+      const tl = localStorage.getItem('pref:tocLevel');
+      const tv = localStorage.getItem('pref:tocVisible');
+      const ta = localStorage.getItem('pref:tocAutoCollapse');
+      if (tl) setMaxLevel(Number(tl) <= 3 ? 3 : 6);
+      if (tv !== null) setShowToc(tv === '1');
+      if (ta !== null) setAutoCollapse(ta === '1');
+    } catch {}
+  }, []);
+  
+  useEffect(() => {
+    try {
+      localStorage.setItem('pref:tocLevel', String(maxLevel));
+      localStorage.setItem('pref:tocVisible', showToc ? '1' : '0');
+      localStorage.setItem('pref:tocAutoCollapse', autoCollapse ? '1' : '0');
+    } catch {}
+  }, [maxLevel, showToc, autoCollapse]);
+
   // 改进的DOM查询函数
   const findEditorRoot = (): HTMLElement | null => {
     // 尝试多种可能的选择器

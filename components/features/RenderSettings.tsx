@@ -23,34 +23,53 @@ function dispatchTocSettings(maxLevelStr: string, autoCollapse: boolean, showToc
 }
 
 export function RenderSettings() {
-  const [tocLevel, setTocLevel] = useState<string>('3');
-  const [tocAutoCollapse, setTocAutoCollapse] = useState<boolean>(true);
-  const [tocVisible, setTocVisible] = useState<boolean>(true);
+  const getBool = (k: string, def: boolean) => {
+    if (typeof window === 'undefined') return def;
+    const v = localStorage.getItem(k);
+    return v === null ? def : v === '1';
+  };
+  const getStr = (k: string, def: string) => {
+    if (typeof window === 'undefined') return def;
+    return localStorage.getItem(k) || def;
+  };
+
+  // 首次从本地初始化，避免首渲染覆盖用户偏好
+  const [tocLevel, setTocLevel] = useState<string>(() => getStr('pref:tocLevel', '3'));
+  const [tocAutoCollapse, setTocAutoCollapse] = useState<boolean>(() => getBool('pref:tocAutoCollapse', true));
+  const [tocVisible, setTocVisible] = useState<boolean>(() => getBool('pref:tocVisible', true));
 
   // 主题/模式/排版
-  const [isDark, setIsDark] = useState<boolean>(false);
-  const [isSource, setIsSource] = useState<boolean>(false);
-  const [fontSize, setFontSize] = useState<string>('14'); // px
+  const [isDark, setIsDark] = useState<boolean>(() => getBool('pref:isDark', false));
+  const [isSource, setIsSource] = useState<boolean>(() => getBool('pref:isSource', false));
+  const [fontSize, setFontSize] = useState<string>(() => getStr('pref:fontSize', '14')); // px
 
   // 应用目录设置
   useEffect(() => {
     dispatchTocSettings(tocLevel, tocAutoCollapse, tocVisible);
+    try {
+      localStorage.setItem('pref:tocLevel', tocLevel);
+      localStorage.setItem('pref:tocVisible', tocVisible ? '1' : '0');
+      localStorage.setItem('pref:tocAutoCollapse', tocAutoCollapse ? '1' : '0');
+    } catch {}
   }, [tocLevel, tocAutoCollapse, tocVisible]);
 
   // 应用排版CSS变量
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty('--editor-font-size', `${fontSize}px`);
+    try { localStorage.setItem('pref:fontSize', fontSize); } catch {}
   }, [fontSize]);
 
   // 主题切换（全局）
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('theme-change', { detail: { isDark } }));
+    try { localStorage.setItem('pref:isDark', isDark ? '1' : '0'); } catch {}
   }, [isDark]);
 
   // 源码模式切换（通知编辑器）
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('set-source-mode', { detail: { isSource } }));
+    try { localStorage.setItem('pref:isSource', isSource ? '1' : '0'); } catch {}
   }, [isSource]);
 
   return (

@@ -37,6 +37,7 @@ import { toast } from '@/hooks/use-toast';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { dwLoadTree, DWNode } from '@/lib/dw';
 
 interface TopBarProps {
   isDarkMode: boolean;
@@ -80,6 +81,21 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
         lastSaved: new Date()
       });
       setFileStatus({ status: 'saved' });
+
+      // 仅持久化真实文件（存在于DW树中）
+      try {
+        void dwLoadTree().then((tree) => {
+          if (!tree) return;
+          const exists = (list: DWNode[]): boolean => {
+            for (const n of list) {
+              if (n.id === ce.detail.id) return true;
+              if (n.children && exists(n.children)) return true;
+            }
+            return false;
+          };
+          if (exists(tree)) localStorage.setItem('session:currentFileId', ce.detail.id);
+        });
+      } catch {}
     };
 
     // 监听编辑器内容变化
@@ -298,7 +314,7 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <FileText className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-lg">MarkdownIDE</span>
+          <span className="font-semibold text-lg">yipoo.org</span>
         </div>
         
         <div className="flex items-center">
@@ -519,21 +535,6 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </Button>
 
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
-        >
-          <PanelRight className="w-4 h-4" />
-        </Button>
-
-        <Button variant="ghost" size="sm" onClick={() => { 
-          window.dispatchEvent(new CustomEvent('dw-force-save')); 
-          toast({ title: '已保存到本地' }); 
-        }}>
-          <Save className="w-4 h-4 mr-1" /> 保存
-        </Button>
-
         {/* Auth menu */}
         {!authed ? (
           <Button variant="default" size="sm" onClick={() => signIn('github', { callbackUrl: '/' })}>
@@ -564,8 +565,13 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           </DropdownMenu>
         )}
 
-        <Button variant="ghost" size="sm">
-          <Settings className="w-4 h-4" />
+        {/* 右侧栏开关放在最右侧 */}
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
+        >
+          <PanelRight className="w-4 h-4" />
         </Button>
       </div>
     </div>
