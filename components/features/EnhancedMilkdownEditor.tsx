@@ -215,93 +215,99 @@ export function EnhancedMilkdownEditor() {
 
 
   useEffect(() => {
-    if (!isSourceMode && containerRef.current) {
-      createEditor(); // 不传参数，让 createEditor 使用当前的 markdownContent
+    if (!containerRef.current) return;
+    createEditor(defaultMarkdown);
 
-      const onOpen = (e: Event) => {
-        const ce = e as CustomEvent<{ id: string; name: string; path: string; content: string }>;
-        if (!ce.detail) return;
-        currentFileIdRef.current = ce.detail.id;
-        const content = typeof ce.detail.content === 'string' ? ce.detail.content : '';
-        setMarkdownContent(content);
-        
-        if (!isSourceMode) {
+    const handleSetSourceMode = (e: Event) => {
+      const ce = e as CustomEvent<{ isSource: boolean }>;
+      if (typeof ce.detail?.isSource === 'boolean') {
+        // 切到源码：先读取当前Milkdown内容
+        if (ce.detail.isSource) {
           try {
-            if (editorRef.current?.setMarkdown) {
-              editorRef.current.setMarkdown(content);
-            } else if (editorRef.current?.setContent) {
-              editorRef.current.setContent(content);
-            } else if (editorRef.current?.replace) {
-              editorRef.current.replace(content);
-            } else {
-              createEditor(content);
+            const currentMarkdown = editorRef.current?.getMarkdown?.();
+            if (typeof currentMarkdown === 'string') {
+              setMarkdownContent(currentMarkdown);
             }
-          } catch {
-            createEditor(content);
-          }
+          } catch {}
         }
-      };
-
-      const doSave = () => dispatchSave();
-      const onDomInput = () => debounceSave(doSave, 400);
-
-      const onForceSave = () => dispatchSave();
-
-      // 监听来自TopBar的文件上传事件
-      const onEditorFileUpload = (e: Event) => {
-        const ce = e as CustomEvent<{ files: FileList }>;
-        if (ce.detail?.files) {
-          handleFileUpload(ce.detail.files);
-        }
-      };
-
-      // 监听获取编辑器内容事件
-      const onGetEditorContent = (e: Event) => {
-        const ce = e as CustomEvent<{ callback: (content: string) => void }>;
-        if (ce.detail?.callback) {
-          const content = isSourceMode ? markdownContent : (editorRef.current?.getMarkdown?.() || markdownContent);
-          ce.detail.callback(content);
-        }
-      };
-
-      window.addEventListener('open-file', onOpen as EventListener);
-      window.addEventListener('editor-file-upload', onEditorFileUpload as EventListener);
-      window.addEventListener('get-editor-content', onGetEditorContent as EventListener);
-      window.addEventListener('dw-force-save', onForceSave as EventListener);
-      
-      const el = containerRef.current;
-      el.addEventListener('input', onDomInput, true);
-      el.addEventListener('keyup', onDomInput, true);
-      el.addEventListener('paste', onDomInput, true);
-      el.addEventListener('cut', onDomInput, true);
-      el.addEventListener('drop', onDomInput, true);
-
-      // Observe PM DOM changes as fallback
-      const pm = el.querySelector('.ProseMirror');
-      if (pm && 'MutationObserver' in window) {
-        const obs = new MutationObserver(() => onDomInput());
-        obs.observe(pm, { childList: true, characterData: true, subtree: true });
-        observerRef.current = obs;
+        setIsSourceMode(ce.detail.isSource);
       }
+    };
 
-      return () => {
-        window.removeEventListener('open-file', onOpen as EventListener);
-        window.removeEventListener('editor-file-upload', onEditorFileUpload as EventListener);
-        window.removeEventListener('get-editor-content', onGetEditorContent as EventListener);
-        window.removeEventListener('dw-force-save', onForceSave as EventListener);
+    const onOpen = (e: Event) => {
+      const ce = e as CustomEvent<{ id: string; name: string; path: string; content: string }>;
+      if (!ce.detail) return;
+      currentFileIdRef.current = ce.detail.id;
+      const content = typeof ce.detail.content === 'string' ? ce.detail.content : '';
+      // Try method-based update first; if not working, rebuild instance with new defaultValue
+      try {
+        // @ts-ignore
+        if (editorRef.current?.setMarkdown) {
+          // @ts-ignore
+          editorRef.current.setMarkdown(content);
+        } else if (editorRef.current?.setContent) {
+          // @ts-ignore
+          editorRef.current.setContent(content);
+        } else if (editorRef.current?.replace) {
+          // @ts-ignore
+          editorRef.current.replace(content);
+        } else {
+          createEditor(content);
+        }
+      } catch {
+        createEditor(content);
+      }
+    };
+
+    const doSave = () => dispatchSave();
+    const onDomInput = () => debounceSave(doSave, 400);
+
+    const onForceSave = () => dispatchSave();
+
+    window.addEventListener('open-file', onOpen as EventListener);
+    window.addEventListener('set-source-mode', handleSetSourceMode as EventListener);
+    window.addEventListener('dw-force-save', onForceSave as EventListener);
+    const el = containerRef.current;
+    el.addEventListener('input', onDomInput, true);
+    el.addEventListener('keyup', onDomInput, true);
+    el.addEventListener('paste', onDomInput, true);
+    el.addEventListener('cut', onDomInput, true);
+    el.addEventListener('drop', onDomInput, true);
+
+    // Observe PM DOM changes as fallback
+    const pm = el.querySelector('.ProseMirror');
+    if (pm && 'MutationObserver' in window) {
+      const obs = new MutationObserver(() => onDomInput());
+      obs.observe(pm, { childList: true, characterData: true, subtree: true });
+      observerRef.current = obs;
+    }
+
+    return () => {
+      window.removeEventListener('open-file', onOpen as EventListener);
+      window.removeEventListener('set-source-mode', handleSetSourceMode as EventListener);
+      window.removeEventListener('dw-force-save', onForceSave as EventListener);
+      const el = containerRef.current;
+      if (el) {
         el.removeEventListener('input', onDomInput, true);
         el.removeEventListener('keyup', onDomInput, true);
         el.removeEventListener('paste', onDomInput, true);
         el.removeEventListener('cut', onDomInput, true);
         el.removeEventListener('drop', onDomInput, true);
-        observerRef.current?.disconnect();
-        try {
-          editorRef.current?.destroy?.();
-        } catch {}
-        editorRef.current = null;
-      };
+      }
+      observerRef.current?.disconnect();
+    };
+  }, []);
+
+  // 根据模式与内容变化创建/销毁编辑器，避免切回预览为空白
+  useEffect(() => {
+    if (!containerRef.current) return;
+    if (isSourceMode) {
+      try { editorRef.current?.destroy?.(); } catch {}
+      return;
     }
-  }, [isSourceMode, markdownContent]); // 依赖 isSourceMode 和 markdownContent
+    // 预览模式：确保编辑器已创建并同步内容
+    createEditor(markdownContent);
+  }, [isSourceMode, markdownContent]);
 
   return (
     <div className="h-full min-h-0 overflow-hidden flex flex-col">

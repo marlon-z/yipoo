@@ -25,19 +25,20 @@ export function CollabPanel() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="text-xs text-muted-foreground">正在开发中，敬请期待。</div>
           <div className="flex items-center justify-between">
             <Label className="text-xs">实时协作</Label>
-            <Switch defaultChecked />
+            <Switch defaultChecked disabled />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">光标同步</Label>
-            <Switch defaultChecked />
+            <Switch defaultChecked disabled />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">离线同步</Label>
-            <Switch />
+            <Switch disabled />
           </div>
         </CardContent>
       </Card>
@@ -48,7 +49,7 @@ export function CollabPanel() {
         </CardHeader>
         <CardContent className="space-y-3">
           {mockCollaborators.map((user, index) => (
-            <div key={index} className="flex items-center gap-3">
+            <div key={index} className="flex items-center gap-3 opacity-60">
               <Avatar className="w-7 h-7">
                 <AvatarFallback className="text-xs">{user.initials}</AvatarFallback>
               </Avatar>
@@ -79,17 +80,17 @@ export function CollabPanel() {
           <CardTitle className="text-sm">分享文档</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <Button variant="outline" size="sm" className="w-full h-7 text-xs">
+          <Button variant="outline" size="sm" className="w-full h-7 text-xs" disabled>
             <Share className="w-3 h-3 mr-2" />
             生成分享链接
           </Button>
           
-          <Button variant="outline" size="sm" className="w-full h-7 text-xs">
+          <Button variant="outline" size="sm" className="w-full h-7 text-xs" disabled>
             <UserPlus className="w-3 h-3 mr-2" />
             邀请协作者
           </Button>
           
-          <Button variant="outline" size="sm" className="w-full h-7 text-xs">
+          <Button variant="outline" size="sm" className="w-full h-7 text-xs" disabled>
             <Link className="w-3 h-3 mr-2" />
             复制链接
           </Button>

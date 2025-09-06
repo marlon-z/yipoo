@@ -6,9 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RenderSettings } from '@/components/features/RenderSettings';
 import { ExportPanel } from '@/components/features/ExportPanel';
 import { CollabPanel } from '@/components/features/CollabPanel';
-import { Settings, Download, Users, Palette, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { dwReset } from '@/lib/dw';
+import { Settings, Download, Users, Palette } from 'lucide-react';
 
 export function RightSidebar() {
   return (
@@ -61,24 +59,6 @@ export function RightSidebar() {
             </TabsContent>
           </div>
         </Tabs>
-      </div>
-
-      <div className="border-t border-border p-3">
-        <Button
-          variant="destructive"
-          className="w-full h-8 text-xs"
-          onClick={async () => {
-            try {
-              await dwReset();
-              location.reload();
-            } catch (e) {
-              console.error(e);
-            }
-          }}
-          title="清除本地数据（IndexedDB），并刷新页面"
-        >
-          <Trash2 className="w-3 h-3 mr-2" /> 清除本地数据
-        </Button>
       </div>
     </div>
   );

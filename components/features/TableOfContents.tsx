@@ -28,10 +28,30 @@ export function TableOfContents() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [maxLevel, setMaxLevel] = useState<3 | 6>(3);
+  const [autoCollapse, setAutoCollapse] = useState<boolean>(true);
+  const [showToc, setShowToc] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const mutationRef = useRef<MutationObserver | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 监听来自右侧栏的目录设置变更
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail || {};
+      if (typeof detail.maxLevel === 'number') {
+        setMaxLevel(detail.maxLevel <= 3 ? 3 : 6);
+      }
+      if (typeof detail.autoCollapse === 'boolean') {
+        setAutoCollapse(detail.autoCollapse);
+      }
+      if (typeof detail.showToc === 'boolean') {
+        setShowToc(detail.showToc);
+      }
+    };
+    window.addEventListener('toc-settings-change', handler as EventListener);
+    return () => window.removeEventListener('toc-settings-change', handler as EventListener);
+  }, []);
 
   // 改进的DOM查询函数
   const findEditorRoot = (): HTMLElement | null => {
@@ -292,6 +312,26 @@ export function TableOfContents() {
     );
   }, [items, maxLevel, query]);
 
+  // 自动折叠：仅展开当前章节（基于最近的 H1/H2 分段）
+  const displayed = useMemo(() => {
+    if (!autoCollapse) return filtered;
+    const idxActive = filtered.findIndex(it => it.id === activeId);
+    if (idxActive === -1) {
+      // 未能确定当前标题，仅展示 H1/H2
+      return filtered.filter(it => it.level <= 2);
+    }
+    // 找到当前章节的范围（上一个 <=H2 到下一个 <=H2 之间）
+    let start = 0;
+    for (let i = idxActive; i >= 0; i--) {
+      if (filtered[i].level <= 2) { start = i; break; }
+    }
+    let end = filtered.length;
+    for (let i = idxActive + 1; i < filtered.length; i++) {
+      if (filtered[i].level <= 2) { end = i; break; }
+    }
+    return filtered.filter((_, i) => filtered[i].level <= 2 || (i >= start && i < end));
+  }, [filtered, autoCollapse, activeId]);
+
   const handleJump = (id: string) => {
     const el = document.getElementById(id);
     if (!el) {
@@ -335,6 +375,8 @@ export function TableOfContents() {
     }
   };
 
+  if (!showToc) return null;
+
   return (
     <div className="w-64 bg-card border-l border-border shrink-0">
       <div className="h-10 border-b border-border flex items-center justify-between px-3">
@@ -373,8 +415,8 @@ export function TableOfContents() {
               <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-2" />
               加载中...
             </div>
-          ) : filtered.length > 0 ? (
-            filtered.map((item) => (
+          ) : displayed.length > 0 ? (
+            displayed.map((item) => (
               <div
                 key={item.id}
                 onClick={() => handleJump(item.id)}

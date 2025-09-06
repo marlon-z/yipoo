@@ -6,6 +6,7 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  --editor-font-size: 14px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -218,13 +219,14 @@
 }
 
 :not(.dark) .milkdown pre {
-  background-color: hsl(var(--muted)) !important;
-  color: hsl(var(--foreground)) !important;
-  border: 1px solid hsl(var(--border));
+  background-color: #f6f8fa !important;
+  color: #24292e !important;
+  border: 1px solid #d0d7de;
+  filter: contrast(1.12) saturate(1.08);
 }
 
 :not(.dark) .milkdown pre code {
-  color: hsl(var(--foreground)) !important;
+  color: #24292e !important;
 }
 
 :not(.dark) .milkdown :not(pre) > code {
@@ -285,22 +287,22 @@
 .milkdown .ProseMirror h4,
 .milkdown .ProseMirror h5,
 .milkdown .ProseMirror h6 {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(var(--foreground));
   font-weight: 600;
 }
 
 .milkdown .ProseMirror p {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(var(--foreground));
   margin: 0 ;
 }
 
 .milkdown .ProseMirror ul,
 .milkdown .ProseMirror ol {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(var(--foreground));
 }
 
 .milkdown .ProseMirror li {
-  color: hsl(var(--foreground)) !important;
+  color: hsl(var(--foreground));
 }
 
 /* CodeMirror 6 编辑器主题同步 */
@@ -666,4 +668,34 @@
 
 .milkdown .milkdown-code-block .tools .copy-button.copied {
   animation: copy-success 0.6s ease-in-out;
+}
+
+/* 浅色模式：CodeMirror token 映射到 GitHub Light 经典配色 */
+:not(.dark) .milkdown .cm-content .cm-keyword { color: #d73a49 !important; }
+:not(.dark) .milkdown .cm-content .cm-operator { color: #d73a49 !important; }
+:not(.dark) .milkdown .cm-content .cm-builtin   { color: #6f42c1 !important; }
+:not(.dark) .milkdown .cm-content .cm-def, 
+:not(.dark) .milkdown .cm-content .cm-function { color: #6f42c1 !important; }
+:not(.dark) .milkdown .cm-content .cm-typeName  { color: #6f42c1 !important; }
+:not(.dark) .milkdown .cm-content .cm-string    { color: #032f62 !important; }
+:not(.dark) .milkdown .cm-content .cm-number    { color: #005cc5 !important; }
+:not(.dark) .milkdown .cm-content .cm-propertyName { color: #005cc5 !important; }
+:not(.dark) .milkdown .cm-content .cm-variableName { color: #24292e !important; }
+:not(.dark) .milkdown .cm-content .cm-punctuation { color: #24292e !important; }
+:not(.dark) .milkdown .cm-content .cm-comment   { color: #6a737d !important; font-style: italic; }
+
+/* 兼容你截图中的简写类名（cp/ct/cv/cu） */
+:not(.dark) .milkdown .cm-content span.cp { color: #d73a49 !important; } /* keyword */
+:not(.dark) .milkdown .cm-content span.cv { color: #d73a49 !important; } /* operator/punct */
+:not(.dark) .milkdown .cm-content span.cu { color: #6f42c1 !important; } /* class/constructor/function */
+:not(.dark) .milkdown .cm-content span.ct { color: #24292e !important; } /* identifier */
+
+/* 应用到 Milkdown 与 ProseMirror 文本 */
+.milkdown .ProseMirror {
+  font-size: var(--editor-font-size);
+}
+
+/* 应用到 CodeMirror 源码编辑器 */
+.cm-editor .cm-content {
+  font-size: var(--editor-font-size);
 }

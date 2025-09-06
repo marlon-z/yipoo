@@ -17,24 +17,25 @@ export function ExportPanel() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start">
+          <div className="text-xs text-muted-foreground">正在开发中，敬请期待。</div>
+          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" disabled>
             <FileText className="w-4 h-4 mr-2" />
             导出为 PDF
           </Button>
           
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start">
+          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" disabled>
             <BookOpen className="w-4 h-4 mr-2" />
             导出为 DOCX
           </Button>
           
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start">
+          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" disabled>
             <FileText className="w-4 h-4 mr-2" />
             导出为 Markdown
           </Button>
           
-          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start">
+          <Button variant="outline" size="sm" className="w-full h-8 text-xs justify-start" disabled>
             <Image className="w-4 h-4 mr-2" />
-            导出为图片
+            导出为 图片
           </Button>
         </CardContent>
       </Card>
@@ -44,29 +45,30 @@ export function ExportPanel() {
           <CardTitle className="text-sm">导出选项</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="text-xs text-muted-foreground">正在开发中，敬请期待。</div>
           <div className="flex items-center justify-between">
             <Label className="text-xs">包含目录</Label>
-            <Switch defaultChecked />
+            <Switch defaultChecked disabled />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">页面编号</Label>
-            <Switch />
+            <Switch disabled />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">语法高亮</Label>
-            <Switch defaultChecked />
+            <Switch defaultChecked disabled />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">数学公式</Label>
-            <Switch defaultChecked />
+            <Switch defaultChecked disabled />
           </div>
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">图表渲染</Label>
-            <Switch defaultChecked />
+            <Switch defaultChecked disabled />
           </div>
         </CardContent>
       </Card>
@@ -76,7 +78,8 @@ export function ExportPanel() {
           <CardTitle className="text-sm">快捷导出</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button size="sm" className="w-full h-8 text-xs">
+          <div className="text-xs text-muted-foreground mb-2">正在开发中，敬请期待。</div>
+          <Button size="sm" className="w-full h-8 text-xs" disabled>
             <Download className="w-3 h-3 mr-2" />
             一键导出 PDF
           </Button>

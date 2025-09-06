@@ -4,9 +4,55 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Palette, Code, Hash, Image } from 'lucide-react';
+import { Palette, Hash } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
+// 将目录设置通过全局事件广播给大纲组件
+function dispatchTocSettings(maxLevelStr: string, autoCollapse: boolean, showToc: boolean) {
+  const maxLevelNum = Number(maxLevelStr);
+  window.dispatchEvent(
+    new CustomEvent('toc-settings-change', {
+      detail: {
+        maxLevel: isNaN(maxLevelNum) ? 3 : maxLevelNum, // 1/2/3/6
+        autoCollapse,
+        showToc,
+      },
+    })
+  );
+}
 
 export function RenderSettings() {
+  const [tocLevel, setTocLevel] = useState<string>('3');
+  const [tocAutoCollapse, setTocAutoCollapse] = useState<boolean>(true);
+  const [tocVisible, setTocVisible] = useState<boolean>(true);
+
+  // 主题/模式/排版
+  const [isDark, setIsDark] = useState<boolean>(false);
+  const [isSource, setIsSource] = useState<boolean>(false);
+  const [fontSize, setFontSize] = useState<string>('14'); // px
+
+  // 应用目录设置
+  useEffect(() => {
+    dispatchTocSettings(tocLevel, tocAutoCollapse, tocVisible);
+  }, [tocLevel, tocAutoCollapse, tocVisible]);
+
+  // 应用排版CSS变量
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--editor-font-size', `${fontSize}px`);
+  }, [fontSize]);
+
+  // 主题切换（全局）
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('theme-change', { detail: { isDark } }));
+  }, [isDark]);
+
+  // 源码模式切换（通知编辑器）
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('set-source-mode', { detail: { isSource } }));
+  }, [isSource]);
+
   return (
     <div className="space-y-4">
       <Card>
@@ -17,24 +63,24 @@ export function RenderSettings() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs">编辑器主题</Label>
-            <Select defaultValue="nord-dark">
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="nord-dark">Nord Dark</SelectItem>
-                <SelectItem value="material-dark">Material Dark</SelectItem>
-                <SelectItem value="github-light">GitHub Light</SelectItem>
-                <SelectItem value="custom">自定义主题</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">暗色模式</Label>
+            <Switch checked={isDark} onCheckedChange={(v) => setIsDark(!!v)} />
           </div>
-          
+
+          <div className="flex items-center justify-between gap-3">
+            <Label className="text-xs whitespace-nowrap">模式</Label>
+            <Tabs value={isSource ? 'source' : 'preview'} onValueChange={(v) => setIsSource(v === 'source')}>
+              <TabsList className="h-8 bg-muted/30 p-0.5 rounded-md border border-border">
+                <TabsTrigger value="preview" className="px-3 h-8 text-xs data-[state=active]:bg-background data-[state=active]:text-foreground rounded-sm">预览</TabsTrigger>
+                <TabsTrigger value="source" className="px-3 h-8 text-xs data-[state=active]:bg-background data-[state=active]:text-foreground rounded-sm">源码</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           <div className="space-y-2">
-            <Label className="text-xs">字体大小</Label>
-            <Select defaultValue="14">
+            <Label className="text-xs">源码字体大小</Label>
+            <Select value={fontSize} onValueChange={(v) => setFontSize(v)}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -52,49 +98,19 @@ export function RenderSettings() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Code className="w-4 h-4" />
-            渲染选项
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">代码高亮</Label>
-            <Switch defaultChecked />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">数学公式</Label>
-            <Switch defaultChecked />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">Mermaid 图表</Label>
-            <Switch defaultChecked />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">自动目录</Label>
-            <Switch defaultChecked />
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <Label className="text-xs">图片懒加载</Label>
-            <Switch defaultChecked />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
             <Hash className="w-4 h-4" />
             目录设置
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">显示大纲</Label>
+            <Switch checked={tocVisible} onCheckedChange={(v) => setTocVisible(!!v)} />
+          </div>
+          
           <div className="space-y-2">
             <Label className="text-xs">显示层级</Label>
-            <Select defaultValue="3">
+            <Select value={tocLevel} onValueChange={(v) => setTocLevel(v)}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
               </SelectTrigger>
@@ -109,7 +125,7 @@ export function RenderSettings() {
           
           <div className="flex items-center justify-between">
             <Label className="text-xs">自动折叠</Label>
-            <Switch defaultChecked />
+            <Switch checked={tocAutoCollapse} onCheckedChange={(v) => setTocAutoCollapse(!!v)} />
           </div>
         </CardContent>
       </Card>

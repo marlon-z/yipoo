@@ -477,11 +477,7 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
 
       {/* Right Section */}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm">
-          <GitBranch className="w-4 h-4 mr-1" />
-          同步
-        </Button>
-        
+        {/* 移除同步 */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm">
@@ -513,10 +509,7 @@ export function TopBar({ isDarkMode, setIsDarkMode, isRightSidebarOpen, setIsRig
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button variant="ghost" size="sm">
-          <Users className="w-4 h-4 mr-1" />
-          协作
-        </Button>
+        {/* 移除协作 */}
 
         <Button 
           variant="ghost" 
