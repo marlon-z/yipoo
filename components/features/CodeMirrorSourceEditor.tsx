@@ -17,7 +17,7 @@ export function CodeMirrorSourceEditor({
   onToggleMode, 
   isSourceMode 
 }: CodeMirrorSourceEditorProps) {
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
   const [localContent, setLocalContent] = useState(content);
   const [lineCount, setLineCount] = useState(1);
   const [charCount, setCharCount] = useState(0);
