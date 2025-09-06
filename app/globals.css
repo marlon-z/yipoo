@@ -114,6 +114,9 @@
   width: 100%;
   display: flex;
   flex-direction: column;
+  position: relative; /* 让绝对定位的 BlockHandle/Slash 菜单基于容器定位 */
+  padding: 0 40px; /* 为左侧 “+” 块句柄预留空间（按钮32px+间距）*/
+  overflow: visible !important; /* 避免被父级 overflow 裁剪 */
 }
 .milkdown .ProseMirror {
   flex: 1;
@@ -121,10 +124,15 @@
   min-height: 100%;
   outline: none;
   padding: 12px;
-  caret-color: currentColor;
   cursor: text;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+/* 使用虚拟光标时隐藏原生光标，避免出现黑/灰双光标 */
+.milkdown .ProseMirror.virtual-cursor-enabled,
+.milkdown .ProseMirror.virtual-cursor-enabled.ProseMirror-focused {
+  caret-color: transparent !important;
 }
 
 /* Milkdown scoped transitions to restore hover effects without global side effects */
@@ -271,6 +279,7 @@
 .milkdown .editor,
 .milkdown .ProseMirror {
   background-color: hsl(var(--background)) !important;
+  overflow: visible; /* 确保内部浮层可见 */
 }
 
 /* 暗色模式下的额外保证 */
